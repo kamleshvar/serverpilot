@@ -1,0 +1,131 @@
+{% extends "admin/base.html" %}
+{% block title %}Scan report · {{ server.name }} · {{ app_name }}{% endblock %}
+{% block kicker %}Infrastructure / discovery{% endblock %}
+{% block page_title %}Scan report: {{ server.name }}{% endblock %}
+
+{% block content %}
+{% set results = scan.scan_results if scan else {} %}
+{% set os_info = results.get('operating_system', {}) %}
+{% set hardware = results.get('hardware', {}) %}
+{% set disk = hardware.get('disk', {}) %}
+{% set software = results.get('software', {}) %}
+{% set docker = software.get('docker', {}) %}
+{% set nginx = software.get('nginx', {}) %}
+{% set network = results.get('network', {}) %}
+{% set hosting = results.get('hosting', {}) %}
+
+<section class="admin-hero">
+  <div>
+    <p class="admin-eyebrow">{{ server.hostname }}:{{ server.ssh_port }}</p>
+    <h2>{{ server.name }}</h2>
+    <p class="admin-hero-copy">
+      {% if scan %}
+        Collected {{ scan.scanned_at.strftime('%d %b %Y %H:%M UTC') }}. Read-only discovery over the verified SSH session.
+      {% else %}
+        No successful scan is recorded for this server yet.
+      {% endif %}
+    </p>
+  </div>
+  <div class="admin-hero-badges">
+    <span class="admin-badge {{ 'admin-badge-success' if server.scan_status.value == 'succeeded' else ('admin-badge-danger' if server.scan_status.value == 'failed' else 'admin-badge-warning') }}">{{ server.scan_status.value }}</span>
+    <a class="admin-link-button" href="{{ url_for('admin_servers.detail', server_id=server.id) }}">Back to server</a>
+  </div>
+</section>
+
+{% if not scan %}
+  <section class="admin-panel admin-empty-state">
+    <h3>No scan data</h3>
+    <p>Reconnect to the server with a private key to collect its current state.</p>
+    <a class="admin-link-button" href="{{ url_for('admin_servers.detail', server_id=server.id) }}">Open server actions</a>
+  </section>
+{% else %}
+  {% if scan.warnings %}
+    <div class="admin-alert admin-alert-warning admin-scan-alert">
+      <strong>Warnings</strong>
+      <ul>{% for warning in scan.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+  {% if scan.errors %}
+    <div class="admin-alert admin-alert-error admin-scan-alert">
+      <strong>Errors</strong>
+      <ul>{% for error in scan.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+
+  <section class="admin-summary-grid">
+    <article class="admin-summary-card"><span>OS</span><strong>{{ os_info.get('pretty_name') or 'Unknown' }}</strong><p>{{ os_info.get('id') or '' }} {{ os_info.get('version') or '' }}</p></article>
+    <article class="admin-summary-card"><span>Architecture</span><strong>{{ hardware.get('architecture') or 'Unknown' }}</strong><p>{{ hardware.get('cpu_model') or 'CPU model unavailable' }}</p></article>
+    <article class="admin-summary-card"><span>CPU cores</span><strong>{{ hardware.get('cpu_cores') or server.total_cpu_cores|round(0)|int }}</strong><p>Configured capacity: {{ server.total_cpu_cores|round(1) }} cores</p></article>
+    <article class="admin-summary-card"><span>Memory</span><strong>{{ hardware.get('total_ram_mb') or server.total_ram_mb }} MB</strong><p>{{ hardware.get('available_ram_mb', 0) }} MB reported available</p></article>
+    <article class="admin-summary-card"><span>Disk used</span><strong>{{ (disk.get('percent') or 0)|round(1) }}%</strong><p>{{ disk.get('used_bytes', 0)|human_bytes }} of {{ disk.get('total_bytes', 0)|human_bytes }}</p></article>
+    <article class="admin-summary-card"><span>Public IP</span><strong>{{ network.get('public_ip') or server.ip_address or 'Unknown' }}</strong><p>Route source: {{ network.get('route_source_ip') or 'not detected' }}</p></article>
+  </section>
+
+  <div class="admin-columns admin-server-columns">
+    <section class="admin-panel">
+      <div class="admin-panel-head"><div><h3>Software</h3><p>Detected versions and systemd service state.</p></div></div>
+      <dl class="admin-detail-list">
+        <div><dt>Docker</dt><dd>{{ docker.get('version') or 'Not installed' }} <span>{{ (docker.get('status') or 'unknown').replace('_', ' ') }}</span></dd></div>
+        <div><dt>Nginx</dt><dd>{{ nginx.get('version') or 'Not installed' }} <span>{{ (nginx.get('status') or 'unknown').replace('_', ' ') }}</span></dd></div>
+        <div><dt>Python</dt><dd>{{ software.get('python', {}).get('version') or 'Not installed' }}</dd></div>
+        <div><dt>Git</dt><dd>{{ software.get('git', {}).get('version') or 'Not installed' }}</dd></div>
+        <div><dt>Gunicorn</dt><dd>{{ software.get('gunicorn', {}).get('version') or 'Not installed' }}</dd></div>
+        {% for name, status in software.get('services', {}).items() %}
+          <div><dt>{{ name }}</dt><dd>{{ status }}</dd></div>
+        {% endfor %}
+      </dl>
+    </section>
+
+    <section class="admin-panel">
+      <div class="admin-panel-head"><div><h3>Network</h3><p>IPv4 addresses and listening TCP ports.</p></div></div>
+      <dl class="admin-detail-list">
+        <div><dt>Interfaces</dt><dd>{% for item in network.get('interfaces', []) %}{{ item.get('name') }} {{ item.get('address') }}{% if not loop.last %}, {% endif %}{% else %}Not collected{% endfor %}</dd></div>
+        <div><dt>Public IP</dt><dd>{{ network.get('public_ip') or 'Not detected' }}</dd></div>
+        <div><dt>Listening ports</dt><dd>{{ network.get('listening_ports', [])|join(', ') or 'None detected' }}</dd></div>
+        <div><dt>SSH endpoint</dt><dd>{{ server.hostname }}:{{ server.ssh_port }}</dd></div>
+        <div><dt>Host key fingerprint</dt><dd class="admin-fingerprint">{{ server.host_key_fingerprint or 'Not recorded' }}</dd></div>
+      </dl>
+    </section>
+  </div>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head"><div><h3>Nginx and hosting inventory</h3><p>Existing configuration files and common application directories.</p></div></div>
+    <div class="admin-scan-grid">
+      <div>
+        <h4>Nginx server names</h4>
+        {% if hosting.get('nginx_server_names') %}
+          <div class="admin-chip-list">{% for name in hosting.get('nginx_server_names') %}<span>{{ name }}</span>{% endfor %}</div>
+        {% else %}<p class="admin-muted">No server names found.</p>{% endif %}
+        <h4>Enabled configuration files</h4>
+        {% if hosting.get('nginx_files') %}
+          <ul class="admin-path-list">{% for path in hosting.get('nginx_files') %}<li><code>{{ path }}</code></li>{% endfor %}</ul>
+        {% else %}<p class="admin-muted">No files found.</p>{% endif %}
+      </div>
+      <div>
+        <h4>Hosting directories</h4>
+        {% if hosting.get('directories') %}
+          <ul class="admin-path-list">{% for path in hosting.get('directories') %}<li><code>{{ path }}</code></li>{% endfor %}</ul>
+        {% else %}<p class="admin-muted">No directories found under /var/www, /srv or /opt.</p>{% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head"><div><h3>Docker containers</h3><p>{{ software.get('containers', [])|length }} container{{ '' if software.get('containers', [])|length == 1 else 's' }} observed.</p></div></div>
+    {% if software.get('containers') %}
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Name</th><th>Image</th><th>State</th><th>Status</th><th>Ports</th></tr></thead>
+          <tbody>
+            {% for container in software.get('containers') %}
+              <tr><td>{{ container.get('name') }}</td><td class="admin-table-muted">{{ container.get('image') }}</td><td>{{ container.get('state') }}</td><td class="admin-table-muted">{{ container.get('status') }}</td><td class="admin-table-muted">{{ container.get('ports') }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="admin-muted">Docker is not installed, is not running, or has no containers.</p>
+    {% endif %}
+  </section>
+{% endif %}
+{% endblock %}

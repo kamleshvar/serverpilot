@@ -1,0 +1,59 @@
+{% extends "user/base.html" %}
+{% block title %}New website · {{ app_name }}{% endblock %}
+{% block kicker %}Workspace{% endblock %}
+{% block page_title %}New website{% endblock %}
+
+{% block content %}
+{% if not has_github_identity %}
+  <section class="panel onboarding-panel">
+    <div class="panel-heading">
+      <div>
+        <h3>Link a GitHub account first</h3>
+        <p>Deployments source their code from the GitHub account you connect.</p>
+      </div>
+      <span class="tag">Step 1 of 1</span>
+    </div>
+    <div class="onboarding-body">
+      <p>Sign in with GitHub (or link it from Connections) and your repositories will load on this page automatically.</p>
+      <div class="form-actions">
+        {% if github_oauth_enabled %}
+          <a class="button button-primary" href="{{ url_for('auth.link_profile', provider='github') }}">Link GitHub account</a>
+        {% endif %}
+        <a class="button button-ghost" href="{{ url_for('settings.connections') }}">Connections</a>
+      </div>
+    </div>
+  </section>
+{% elif not installations and not repositories %}
+  <section class="panel onboarding-panel">
+    <div class="panel-heading">
+      <div>
+        <h3>No accessible repositories</h3>
+        <p>Nothing could be loaded from your linked GitHub account yet.</p>
+      </div>
+      <span class="tag">Check connection</span>
+    </div>
+    <div class="onboarding-body">
+      {% if repository_error %}
+        <p class="muted">{{ repository_error }}</p>
+      {% endif %}
+      <p class="muted">Repo access uses the GitHub authorization linked to your account. Re-link GitHub from Connections if your authorization expired.</p>
+      <a class="button button-ghost" href="{{ url_for('settings.connections') }}">Open connections</a>
+    </div>
+  </section>
+{% else %}
+  <section class="page-heading">
+    <div>
+      <h2>Describe the website</h2>
+      <p>Repositories loaded from your linked GitHub account. Deployment runs only after a healthy agent accepts the task.</p>
+    </div>
+    <a class="button button-ghost" href="{{ url_for('dashboard.index') }}">Back to overview</a>
+  </section>
+  <section class="panel form-panel">
+    {% with editing=False, website=None %}{% include "sites/_form.html" %}{% endwith %}
+  </section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/site-form.js') }}" defer></script>
+{% endblock %}

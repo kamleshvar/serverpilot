@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+{% block title %}Deployment authorization · {{ app_name }}{% endblock %}
+{% block kicker %}Administration{% endblock %}
+{% block page_title %}Deployment authorization{% endblock %}
+
+{% block content %}
+<section class="admin-panel admin-panel-featured">
+  <div class="admin-panel-head">
+    <div>
+      <h3>Separate deployment approval</h3>
+      <p>User and site management never requires this step. Destructive platform deployment actions require a freshly verified administrator identity.</p>
+    </div>
+    {% if not required %}
+      <span class="admin-badge">Not required by configuration</span>
+    {% elif authorized %}
+      <span class="admin-badge admin-badge-success">Authorized</span>
+    {% else %}
+      <span class="admin-badge admin-badge-warning">Approval required</span>
+    {% endif %}
+  </div>
+
+  <dl class="admin-detail-list">
+    <div><dt>Policy</dt><dd>{{ 'Required' if required else 'Disabled (ADMIN_DEPLOYMENT_AUTH_REQUIRED=false)' }}</dd></div>
+    <div><dt>Status</dt><dd>{{ 'Confirmed' if authorized else 'Not confirmed' }}</dd></div>
+    <div><dt>Expires</dt><dd>{{ expires_at.strftime('%d %b %Y %H:%M UTC') if expires_at else '—' }}</dd></div>
+    <div><dt>Authorized identity</dt><dd>{{ admin.email }} <span>linked account or ADMIN_EMAIL match</span></dd></div>
+  </dl>
+
+  <div class="admin-auth-actions">
+    {% if google_available %}
+      <a class="admin-secondary" href="{{ url_for('admin.deployment_auth_start', provider='google') }}">Verify with Google</a>
+    {% endif %}
+    {% if github_available %}
+      <a class="admin-secondary" href="{{ url_for('admin.deployment_auth_start', provider='github') }}">Verify with GitHub</a>
+    {% endif %}
+    {% if not google_available and not github_available %}
+      <p class="admin-muted">No OAuth provider is configured. Deployment authorization cannot be completed until Google or GitHub OAuth is configured.</p>
+    {% endif %}
+  </div>
+
+  <p class="admin-hint">Verification lasts {{ (config.ADMIN_DEPLOYMENT_AUTH_LIFETIME.total_seconds() // 60)|int }} minutes and is bound to this browser session. It is invalidated by signing out or by any session rotation.</p>
+</section>
+
+<section class="admin-panel">
+  <div class="admin-panel-head">
+    <div>
+      <h3>What this protects</h3>
+      <p>Deployment approval is enforced server-side by <code>@admin_deployment_required</code> on destructive operations.</p>
+    </div>
+  </div>
+  <ul class="admin-rules">
+    <li>Website start/stop/restart and deployment actions remain separate from viewing dashboards.</li>
+    <li>A linked GitHub identity can be used when no email is exposed by the provider.</li>
+    <li>Unverified provider emails never satisfy the approval gate.</li>
+    <li>Every successful and failed approval is written to the administrator audit log.</li>
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "admin/base.html" %}
+{% block title %}Users · {{ app_name }}{% endblock %}
+{% block kicker %}Administration{% endblock %}
+{% block page_title %}Users{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Account directory</h3>
+      <p>Review accounts and suspend or reactivate access without deleting data.</p>
+    </div>
+  </div>
+  <form class="filter-bar" method="get" action="{{ url_for('admin.users') }}">
+    <input type="search" name="q" value="{{ query_text }}" placeholder="Search email or name">
+    <select name="status">
+      <option value="">All statuses</option>
+      {% for status in statuses %}
+        <option value="{{ status }}" {{ 'selected' if status == status_filter }}>{{ status }}</option>
+      {% endfor %}
+    </select>
+    <button class="button button-ghost" type="submit">Filter</button>
+  </form>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Websites</th><th>Created</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for user in users %}
+          <tr>
+            <td>
+              <strong>{{ user.display_name }}</strong>
+              <div class="table-muted">{{ user.email }}</div>
+            </td>
+            <td>{{ user.role.value }}</td>
+            <td><span class="status status-{{ user.status.value }}">{{ user.status.value }}</span></td>
+            <td>{{ user.websites|length if user.websites else 0 }}</td>
+            <td class="table-muted">{{ user.created_at.strftime('%d %b %Y') }}</td>
+            <td>
+              {% if user.id != admin.id and user.role.value != 'admin' %}
+                <form method="post" action="{{ url_for('admin.set_user_status', user_id=user.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="status" value="{{ 'active' if user.status.value in ['suspended', 'disabled'] else 'suspended' }}">
+                  <button class="button button-small button-ghost" type="submit">
+                    {{ 'Reactivate' if user.status.value in ['suspended', 'disabled'] else 'Suspend' }}
+                  </button>
+                </form>
+              {% else %}
+                <span class="table-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="table-muted">No users matched the filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

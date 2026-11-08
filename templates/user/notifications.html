@@ -1,0 +1,46 @@
+{% extends "user/base.html" %}
+{% block title %}Notifications · {{ app_name }}{% endblock %}
+{% block kicker %}Workspace{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Account notifications</h3>
+      <p>{{ unread }} unread notification{{ '' if unread == 1 else 's' }}.</p>
+    </div>
+    {% if unread %}
+      <form method="post" action="{{ url_for('dashboard.mark_notifications_read') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-ghost" type="submit">Mark all read</button>
+      </form>
+    {% endif %}
+  </div>
+  {% if notifications %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Severity</th><th>Received</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for notification in notifications %}
+            <tr>
+              <td>
+                <strong>{{ notification.title }}</strong>
+                {% if notification.body %}<div class="table-muted">{{ notification.body }}</div>{% endif %}
+              </td>
+              <td><span class="status status-{{ notification.severity.value }}">{{ notification.severity.value }}</span></td>
+              <td class="table-muted">{{ notification.created_at.strftime('%d %b %Y %H:%M') }}</td>
+              <td class="table-muted">{{ 'Read' if notification.is_read else 'Unread' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No notifications</h3>
+      <p>Deployment, backup, and account events appear here.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,189 @@
+{% extends "user/base.html" %}
+{% block title %}{{ website.name }} · {{ app_name }}{% endblock %}
+{% block kicker %}Website{% endblock %}
+{% block page_title %}{{ website.name }}{% endblock %}
+
+{% block content %}
+{% if website.is_admin_stopped %}
+  <div class="notice notice-danger">
+    <strong>Administrator stop is active.</strong>
+    <span>This website cannot be started or deleted from the user panel. Contact the platform operator.</span>
+  </div>
+{% elif website.maintenance_enabled %}
+  <div class="notice notice-warning">
+    <strong>Maintenance mode.</strong>
+    <span>{{ website.maintenance_message or 'The website is temporarily withheld from traffic.' }}</span>
+  </div>
+{% endif %}
+
+<section class="website-hero">
+  <div class="website-hero-main">
+    <div class="website-status-line">
+      <span class="status status-{{ website.status.value }}">{{ website.status.value.replace('_', ' ') }}</span>
+      <span class="website-domain">{{ website.fqdn }}</span>
+    </div>
+    <p class="website-status-detail">{{ website.status_detail or 'No status detail recorded.' }}</p>
+    <div class="website-meta">
+      <div><span>Repository</span><strong>{{ website.repository_full_name or 'Not connected' }}</strong></div>
+      <div><span>Branch</span><strong>{{ website.branch }}</strong></div>
+      <div><span>Framework</span><strong>{{ website.framework.value.replace('_', ' ') }}</strong></div>
+      <div><span>Internal port</span><strong>{{ website.internal_port }}</strong></div>
+    </div>
+  </div>
+  <div class="website-hero-actions">
+    {% if can_edit %}
+      <a class="button button-ghost" href="{{ url_for('sites.edit', website_id=website.id) }}">Edit configuration</a>
+    {% endif %}
+    {% if agent_available and website.status.value != 'building' and not website.is_admin_stopped %}
+      <form method="post" action="{{ url_for('sites.start', website_id=website.id) if website.status.value in ['user_stopped', 'failed', 'pending', 'quota_stopped'] and website.current_deployment_id else url_for('sites.deploy', website_id=website.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-primary" type="submit">
+          {{ 'Start website' if website.status.value in ['user_stopped', 'failed', 'pending', 'quota_stopped'] and website.current_deployment_id else ('Redeploy' if website.current_deployment_id else 'Deploy now') }}
+        </button>
+      </form>
+    {% endif %}
+    {% if website.status.value == 'running' %}
+      <form method="post" action="{{ url_for('sites.stop', website_id=website.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-ghost" type="submit">Stop website</button>
+      </form>
+    {% endif %}
+    {% if website.status.value not in ['running', 'building'] %}
+      <form method="post" action="{{ url_for('sites.delete', website_id=website.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-danger" type="submit">Delete website</button>
+      </form>
+    {% endif %}
+  </div>
+</section>
+
+{% if not agent_available %}
+  <div class="notice">
+    <strong>Deployment engine not connected.</strong>
+    <span>No healthy agent is registered. This website is configured but cannot be started or deployed until the operator connects an agent.</span>
+  </div>
+{% endif %}
+
+<div class="detail-columns">
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h3>Runtime configuration</h3>
+        <p>Applied to the isolated application container on deployment.</p>
+      </div>
+    </div>
+    <dl class="detail-list">
+      <div><dt>RAM allocation</dt><dd>{{ website.ram_limit_mb }} MB</dd></div>
+      <div><dt>Storage allocation</dt><dd>{{ (website.storage_limit_mb / 1024)|round(1) }} GB</dd></div>
+      <div><dt>CPU allocation</dt><dd>{{ website.cpu_limit }} core</dd></div>
+      <div><dt>Build command</dt><dd><code>{{ website.build_command or '—' }}</code></dd></div>
+      <div><dt>Start command</dt><dd><code>{{ website.start_command or '—' }}</code></dd></div>
+      <div><dt>Health check</dt><dd><code>{{ website.healthcheck_path }}</code></dd></div>
+      <div><dt>Auto deploy</dt><dd>{{ 'Enabled' if website.auto_deploy_enabled else 'Disabled' }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <h3>Shared account quota</h3>
+        <p>Limits apply across every website on your account.</p>
+      </div>
+      <span class="tag">{{ quota.plan_name }}</span>
+    </div>
+    <div class="quota-grid quota-grid-stacked">
+      <div class="quota-row">
+        <div class="quota-copy"><span>Website slots</span><strong>{{ quota.websites_used }} / {{ quota.max_websites }}</strong></div>
+        <div class="progress"><span style="width: {{ quota.website_percent }}%"></span></div>
+      </div>
+      <div class="quota-row">
+        <div class="quota-copy"><span>RAM reserved</span><strong>{{ quota.ram_reserved_mb }} / {{ quota.ram_limit_mb }} MB</strong></div>
+        <div class="progress"><span style="width: {{ quota.ram_percent }}%"></span></div>
+      </div>
+      <div class="quota-row">
+        <div class="quota-copy"><span>Storage reserved</span><strong>{{ (quota.storage_reserved_mb / 1024)|round(1) }} / {{ (quota.storage_limit_mb / 1024)|round(0)|int }} GB</strong></div>
+        <div class="progress"><span style="width: {{ quota.storage_percent }}%"></span></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Deployment history</h3>
+      <p>Only deployments acknowledged by an agent are shown as successful.</p>
+    </div>
+  </div>
+  {% if deployments %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>#</th><th>Status</th><th>Commit</th><th>Started</th><th>Finished</th></tr></thead>
+        <tbody>
+          {% for deployment in deployments %}
+            <tr>
+              <td class="table-muted"><a href="{{ url_for('sites.deployment_detail', website_id=website.id, deployment_id=deployment.id) }}">#{{ deployment.number }}</a></td>
+              <td><span class="status status-{{ deployment.status.value }}">{{ deployment.status.value.replace('_', ' ') }}</span></td>
+              <td class="table-muted">{{ (deployment.commit_sha or '')[:8] or '—' }}</td>
+              <td class="table-muted">{{ deployment.started_at.strftime('%d %b %Y %H:%M') if deployment.started_at else '—' }}</td>
+              <td class="table-muted">{{ deployment.finished_at.strftime('%d %b %Y %H:%M') if deployment.finished_at else '—' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No deployments yet</h3>
+      <p>Deployment history appears here after a healthy agent receives the first task.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Backups</h3>
+      <p>Compressed data-volume snapshots created by the connected agent.</p>
+    </div>
+    {% if agent_available and website.status.value not in ['deleted', 'deleting'] %}
+      <form method="post" action="{{ url_for('sites.create_backup', website_id=website.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="button button-ghost" type="submit">Create backup</button>
+      </form>
+    {% endif %}
+  </div>
+  {% if backups %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Created</th><th>Status</th><th>Size</th><th>Expires</th><th>Restore</th></tr></thead>
+        <tbody>
+          {% for backup in backups %}
+            <tr>
+              <td class="table-muted">{{ backup.created_at.strftime('%d %b %Y %H:%M') }}</td>
+              <td><span class="status status-{{ backup.status.value }}">{{ backup.status.value }}</span></td>
+              <td class="table-muted">{{ ((backup.size_bytes or 0) / 1048576)|round(2) }} MB</td>
+              <td class="table-muted">{{ backup.expires_at.strftime('%d %b %Y') if backup.expires_at else '—' }}</td>
+              <td>
+                {% if backup.status.value in ['completed', 'restored'] and website.status.value not in ['running', 'building'] and agent_available %}
+                  <form method="post" action="{{ url_for('sites.restore_backup', website_id=website.id, backup_id=backup.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="button button-small button-ghost" type="submit">Restore</button>
+                  </form>
+                {% else %}
+                  <span class="table-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <h3>No backups yet</h3>
+      <p>Create a backup after the first deployment is running or stopped.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

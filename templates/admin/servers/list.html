@@ -1,0 +1,105 @@
+{% extends "admin/base.html" %}
+{% block title %}Servers &amp; agents · {{ app_name }}{% endblock %}
+{% block kicker %}Infrastructure{% endblock %}
+{% block page_title %}Servers &amp; agents{% endblock %}
+
+{% block content %}
+<section class="admin-hero">
+  <div>
+    <p class="admin-eyebrow">Fleet inventory</p>
+    <h2>Connect, inspect and approve deployment hosts</h2>
+    <p class="admin-hero-copy">
+      SSH credentials are used only for the current connection. Private keys, passphrases
+      and sudo passwords are never stored in the database.
+    </p>
+  </div>
+  <div class="admin-hero-badges">
+    <a class="admin-primary admin-primary-inline" href="{{ url_for('admin_servers.add') }}">Add server</a>
+  </div>
+</section>
+
+{% if servers %}
+<section class="admin-panel">
+  <div class="admin-panel-head">
+    <div>
+      <h3>Registered servers</h3>
+      <p>Only approved servers with a healthy agent can receive deployments.</p>
+    </div>
+  </div>
+  <div class="admin-table-wrap">
+    <table class="admin-table admin-server-table">
+      <thead>
+        <tr>
+          <th>Server</th>
+          <th>Approval</th>
+          <th>Connection</th>
+          <th>Discovery</th>
+          <th>Agent</th>
+          <th>Capacity</th>
+          <th>Last heartbeat</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for server in servers %}
+          {% set latest = scans.get(server.id) %}
+          <tr>
+            <td>
+              <strong class="admin-server-name">{{ server.name }}</strong>
+              <span class="admin-server-host">{{ server.hostname }}:{{ server.ssh_port }}</span>
+              {% if server.is_default %}<span class="admin-badge admin-badge-success">Default</span>{% endif %}
+            </td>
+            <td>
+              <span class="admin-badge {{ 'admin-badge-success' if server.approval_status.value == 'approved' else ('admin-badge-danger' if server.approval_status.value == 'rejected' else 'admin-badge-warning') }}">
+                {{ server.approval_status.value }}
+              </span>
+            </td>
+            <td>
+              <span class="admin-badge {{ 'admin-badge-success' if server.connection_status.value == 'connected' else ('admin-badge-danger' if server.connection_status.value == 'failed' else 'admin-badge-muted') }}">
+                {{ server.connection_status.value }}
+              </span>
+            </td>
+            <td>
+              <span class="admin-badge {{ 'admin-badge-success' if server.scan_status.value == 'succeeded' else ('admin-badge-danger' if server.scan_status.value == 'failed' else 'admin-badge-muted') }}">
+                {{ server.scan_status.value }}
+              </span>
+              {% if latest and latest.warnings %}
+                <span class="admin-server-note">{{ latest.warnings|length }} warning{{ '' if latest.warnings|length == 1 else 's' }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="admin-badge {{ 'admin-badge-success' if server.agent_install_status.value == 'installed' else ('admin-badge-danger' if server.agent_install_status.value == 'failed' else 'admin-badge-muted') }}">
+                {{ server.agent_install_status.value.replace('_', ' ') }}
+              </span>
+            </td>
+            <td>
+              <span class="admin-server-host">{{ (server.total_ram_mb / 1024)|round(1) }} GB RAM · {{ (server.total_storage_mb / 1024)|round(1) }} GB disk</span>
+            </td>
+            <td class="admin-table-muted">
+              {{ server.last_heartbeat_at.strftime('%d %b %H:%M') if server.last_heartbeat_at else 'Never' }}
+            </td>
+            <td>
+              <div class="admin-row-actions">
+                <a class="admin-link-button" href="{{ url_for('admin_servers.detail', server_id=server.id) }}">Open</a>
+                {% if latest %}
+                  <a class="admin-link-button" href="{{ url_for('admin_servers.scan', server_id=server.id) }}">Scan</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% else %}
+<section class="admin-panel admin-empty-state">
+  <div class="admin-empty-mark" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="none"><rect x="3" y="4" width="18" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="3" y="14" width="18" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6" stroke="currentColor" stroke-width="1.3"/></svg>
+  </div>
+  <h3>No servers connected</h3>
+  <p>Connect a supported Ubuntu host over SSH. ServerPilot will inspect the existing installation before offering agent enrollment.</p>
+  <a class="admin-primary admin-primary-inline" href="{{ url_for('admin_servers.add') }}">Connect the first server</a>
+</section>
+{% endif %}
+{% endblock %}

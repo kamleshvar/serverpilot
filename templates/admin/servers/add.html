@@ -1,0 +1,99 @@
+{% extends "admin/base.html" %}
+{% block title %}Add server · {{ app_name }}{% endblock %}
+{% block kicker %}Infrastructure{% endblock %}
+{% block page_title %}Connect a server{% endblock %}
+
+{% macro field(field, hint=None) %}
+  <label class="admin-field" for="{{ field.id }}">
+    <span>{{ field.label.text }}</span>
+    {{ field }}
+    {% if hint %}<small class="admin-field-hint">{{ hint }}</small>{% endif %}
+    {% for error in field.errors %}<em>{{ error }}</em>{% endfor %}
+  </label>
+{% endmacro %}
+
+{% block content %}
+<section class="admin-hero">
+  <div>
+    <p class="admin-eyebrow">SSH discovery</p>
+    <h2>Inspect a host before installing an agent</h2>
+    <p class="admin-hero-copy">
+      Use a temporary, dedicated SSH key. The key is held in memory for this request only.
+      Host key verification is mandatory unless known_hosts is configured server-side.
+    </p>
+  </div>
+  <div class="admin-hero-badges">
+    <a class="admin-link-button" href="{{ url_for('admin_servers.index') }}">Back to servers</a>
+  </div>
+</section>
+
+<div class="admin-columns admin-server-form-columns">
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Connection details</h3>
+        <p>The host must be reachable from the control plane over SSH.</p>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('admin_servers.connect_server') }}" class="admin-form admin-form-wide" id="server-add-form" autocomplete="off">
+      {{ form.hidden_tag() }}
+      <div class="admin-form-grid">
+        {{ field(form.name, 'A short label used throughout the control plane.') }}
+        {{ field(form.hostname, 'IPv4 address or DNS hostname. Private networks require SSH_ALLOW_PRIVATE_TARGETS or SSH_ALLOWED_NETWORKS.') }}
+        {{ field(form.ssh_port) }}
+        {{ field(form.ssh_username, 'Use a sudo-capable account. It is stored for later rescans, never the key.') }}
+      </div>
+
+      {{ field(form.auth_method) }}
+      {{ field(form.private_key, 'Never pasted into logs or stored in the database. Use a dedicated key with a passphrase where possible.') }}
+      {{ field(form.key_passphrase, 'Optional. Cleared from the form after this request.') }}
+      {{ field(form.host_key_fingerprint, 'Required unless SSH_KNOWN_HOSTS_PATH is configured. Verify it through your provider console or an independent channel.') }}
+      {{ field(form.sudo_password, 'Optional and never stored. Required only when sudo prompts for a password.') }}
+
+      <label class="admin-check">
+        {{ form.auto_scan() }}
+        <span>{{ form.auto_scan.label.text }}</span>
+      </label>
+      <label class="admin-check">
+        {{ form.install_agent() }}
+        <span>{{ form.install_agent.label.text }}</span>
+      </label>
+      <p class="admin-form-note">
+        Agent installation requires Python 3 with venv, Docker, Nginx, sudo and systemd.
+        Missing software is reported during preflight and is never installed silently.
+        This request can take several minutes while the agent starts and checks in.
+      </p>
+      {{ form.submit(class_="admin-primary") }}
+    </form>
+  </section>
+
+  <aside class="admin-panel admin-security-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Security model</h3>
+        <p>What happens during provisioning.</p>
+      </div>
+    </div>
+    <ul class="admin-rules">
+      <li>The control plane validates the target and rejects loopback, link-local, multicast and reserved addresses unless an explicit network allowlist is configured.</li>
+      <li>The SSH host key is checked against the SHA256 fingerprint or the server-side known_hosts file before authentication succeeds.</li>
+      <li>Discovery runs only a fixed, read-only command allowlist. Request values are never interpolated into shell commands.</li>
+      <li>Agent enrollment uses a short-lived, single-use token. The agent receives its own credential; the SSH key is not copied to the host.</li>
+      <li>The agent runs as a dedicated non-root user with a restricted sudo rule for Nginx validation and reload only.</li>
+      <li>New servers stay pending until an administrator reviews the scan and approves them.</li>
+    </ul>
+  </aside>
+</div>
+
+<div class="server-provision-overlay" id="server-provision-overlay" hidden role="status" aria-live="polite">
+  <div class="server-provision-card">
+    <span class="server-spinner" aria-hidden="true"></span>
+    <h3>Connecting to the server</h3>
+    <p>Verifying the host key, authenticating, collecting discovery data and preparing the agent. Keep this page open.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-servers.js') }}" defer></script>
+{% endblock %}

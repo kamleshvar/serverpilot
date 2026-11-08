@@ -1,0 +1,17 @@
+{% extends "user/base.html" %}
+{% block title %}Edit {{ website.name }} · {{ app_name }}{% endblock %}
+{% block kicker %}Website configuration{% endblock %}
+{% block page_title %}Edit {{ website.name }}{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <h2>Configuration</h2>
+    <p>{{ website.fqdn }} · {{ website.status.value.replace('_', ' ') }}</p>
+  </div>
+  <a class="button button-ghost" href="{{ url_for('sites.detail', website_id=website.id) }}">Back to website</a>
+</section>
+<section class="panel form-panel">
+  {% with editing=True %}{% include "sites/_form.html" %}{% endwith %}
+</section>
+{% endblock %}

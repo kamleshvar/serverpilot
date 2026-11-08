@@ -1,0 +1,49 @@
+{% extends "user/base.html" %}
+{% block title %}Deployment #{{ deployment.number }} - {{ app_name }}{% endblock %}
+{% block head %}
+  {% if not deployment.is_terminal %}<meta http-equiv="refresh" content="5">{% endif %}
+{% endblock %}
+{% block kicker %}Deployment{% endblock %}
+{% block page_title %}Deployment #{{ deployment.number }}{% endblock %}
+
+{% block content %}
+<section class="website-hero">
+  <div class="website-hero-main">
+    <div class="website-status-line">
+      <span class="status status-{{ deployment.status.value }}">{{ deployment.status.value.replace('_', ' ') }}</span>
+      <span class="website-domain">{{ website.fqdn }}</span>
+    </div>
+    <p class="website-status-detail">
+      {{ deployment.failure_reason or ('Waiting for the agent to report progress.' if not deployment.is_terminal else 'Deployment finished.') }}
+    </p>
+    <div class="website-meta">
+      <div><span>Commit</span><strong>{{ (deployment.commit_sha or '')[:12] or 'Not recorded' }}</strong></div>
+      <div><span>Branch</span><strong>{{ deployment.branch or 'Not recorded' }}</strong></div>
+      <div><span>Started</span><strong>{{ deployment.started_at.strftime('%d %b %Y %H:%M:%S') if deployment.started_at else 'Not started' }}</strong></div>
+      <div><span>Finished</span><strong>{{ deployment.finished_at.strftime('%d %b %Y %H:%M:%S') if deployment.finished_at else 'In progress' }}</strong></div>
+    </div>
+  </div>
+  <div class="website-hero-actions">
+    <a class="button button-ghost" href="{{ url_for('sites.detail', website_id=website.id) }}">Back to website</a>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Agent logs</h3>
+      <p>Lines are written by the connected deployment agent. This page refreshes while the deployment is active.</p>
+    </div>
+    <span class="tag">{{ logs|length }} lines</span>
+  </div>
+  {% if logs %}
+    <pre class="deployment-log">{% for entry in logs %}<span class="log-{{ entry.level.value }}">[{{ entry.created_at.strftime('%H:%M:%S') }}] {{ entry.message }}</span>
+{% endfor %}</pre>
+  {% else %}
+    <div class="empty-state">
+      <h3>No logs yet</h3>
+      <p>The agent has not reported output for this deployment.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

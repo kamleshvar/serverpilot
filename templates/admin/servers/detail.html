@@ -1,0 +1,331 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ server.name }} · Servers · {{ app_name }}{% endblock %}
+{% block kicker %}Infrastructure / server{% endblock %}
+{% block page_title %}{{ server.name }}{% endblock %}
+
+{% block content %}
+{% set results = scan.scan_results if scan else {} %}
+{% set os_info = results.get('operating_system', {}) %}
+{% set hardware = results.get('hardware', {}) %}
+{% set disk = hardware.get('disk', {}) %}
+{% set software = results.get('software', {}) %}
+{% set docker = software.get('docker', {}) %}
+{% set nginx = software.get('nginx', {}) %}
+{% set network = results.get('network', {}) %}
+{% set hosting = results.get('hosting', {}) %}
+{% set latest_metric = history[-1] if history else none %}
+
+<section class="admin-hero admin-server-hero">
+  <div>
+    <p class="admin-eyebrow">{{ server.hostname }}:{{ server.ssh_port }}</p>
+    <h2>{{ server.name }}</h2>
+    <p class="admin-hero-copy">
+      {{ server.operating_system or 'Operating system not yet discovered' }}
+      {% if server.os_version %}· {{ server.os_version }}{% endif %}
+      {% if server.ip_address %}· {{ server.ip_address }}{% endif %}
+    </p>
+  </div>
+  <div class="admin-hero-badges">
+    <span class="admin-badge {{ 'admin-badge-success' if server.approval_status.value == 'approved' else ('admin-badge-danger' if server.approval_status.value == 'rejected' else 'admin-badge-warning') }}">{{ server.approval_status.value }}</span>
+    <span class="admin-badge {{ 'admin-badge-success' if server.status.value == 'online' else 'admin-badge-muted' }}">{{ server.status.value }}</span>
+    {% if server.is_default %}<span class="admin-badge admin-badge-success">Default server</span>{% endif %}
+  </div>
+</section>
+
+<div class="admin-row-actions admin-action-bar">
+  <a class="admin-link-button" href="{{ url_for('admin_servers.index') }}">All servers</a>
+  {% if scan %}<a class="admin-link-button" href="{{ url_for('admin_servers.scan', server_id=server.id) }}">Full scan report</a>{% endif %}
+  {% if server.approval_status.value == 'pending' and server.scan_status.value == 'succeeded' %}
+    <form method="post" action="{{ url_for('admin_servers.approve', server_id=server.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="admin-primary admin-primary-inline" type="submit">Approve server</button>
+    </form>
+  {% endif %}
+  {% if server.approval_status.value != 'rejected' %}
+    <form method="post" action="{{ url_for('admin_servers.reject', server_id=server.id) }}" data-confirm="Reject this server and revoke its agent?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="admin-secondary admin-danger" type="submit">Reject</button>
+    </form>
+  {% endif %}
+  <form method="post" action="{{ url_for('admin_servers.delete', server_id=server.id) }}" data-confirm="Remove this server from the control plane? This is blocked while websites are assigned.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="admin-secondary admin-danger" type="submit">Remove server</button>
+  </form>
+</div>
+
+{% if server.last_error %}
+  <div class="admin-alert admin-alert-error">{{ server.last_error }}</div>
+{% endif %}
+{% if server.last_scan_error %}
+  <div class="admin-alert admin-alert-warning">Last scan issue: {{ server.last_scan_error }}</div>
+{% endif %}
+
+<section class="admin-summary-grid">
+  <article class="admin-summary-card">
+    <span>Operating system</span>
+    <strong>{{ os_info.get('pretty_name') or server.operating_system or 'Unknown' }}</strong>
+    <p>{{ results.get('hostname') or server.hostname }}</p>
+  </article>
+  <article class="admin-summary-card">
+    <span>CPU</span>
+    <strong>{{ server.cpu_model or 'Unknown' }}</strong>
+    <p>{{ server.total_cpu_cores|round(0)|int }} cores · {{ hardware.get('architecture') or 'architecture unknown' }}</p>
+  </article>
+  <article class="admin-summary-card">
+    <span>Memory</span>
+    <strong>{{ server.total_ram_mb }} MB</strong>
+    <p>{% if latest_metric %}{{ latest_metric.ram_usage|round(1) }}% measured by agent{% else %}No agent samples yet{% endif %}</p>
+  </article>
+  <article class="admin-summary-card">
+    <span>Root disk</span>
+    <strong>{{ (server.total_storage_mb / 1024)|round(1) }} GB total</strong>
+    <p>{% if disk.get('available_bytes') %}{{ disk.get('available_bytes')|human_bytes }} available{% else %}Capacity from configuration{% endif %}</p>
+  </article>
+  <article class="admin-summary-card">
+    <span>Docker</span>
+    <strong>{{ (docker.get('version') or server.docker_version or 'Not installed') }}</strong>
+    <p>{{ (docker.get('status') or server.docker_status or 'unknown').replace('_', ' ') }}</p>
+  </article>
+  <article class="admin-summary-card">
+    <span>Nginx</span>
+    <strong>{{ (nginx.get('version') or server.nginx_version or 'Not installed') }}</strong>
+    <p>{{ (nginx.get('status') or server.nginx_status or 'unknown').replace('_', ' ') }}</p>
+  </article>
+</section>
+
+<div class="admin-columns admin-server-columns">
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Resource history</h3>
+        <p>Recent agent heartbeats. CPU, RAM and storage are percentages.</p>
+      </div>
+    </div>
+    {% if history %}
+      <div class="monitor-chart" aria-label="Server resource usage history">
+        {% for sample in history %}
+          <div class="monitor-sample" title="{{ sample.recorded_at.strftime('%d %b %H:%M:%S') }} — CPU {{ sample.cpu_usage|round(1) }}%, RAM {{ sample.ram_usage|round(1) }}%, disk {{ sample.storage_usage|round(1) }}%">
+            <span class="monitor-bar monitor-bar-cpu" style="height: {{ sample.cpu_usage|float }}%"></span>
+            <span class="monitor-bar monitor-bar-ram" style="height: {{ sample.ram_usage|float }}%"></span>
+            <span class="monitor-bar monitor-bar-disk" style="height: {{ sample.storage_usage|float }}%"></span>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="monitor-legend">
+        <span><i class="monitor-dot monitor-dot-cpu"></i>CPU</span>
+        <span><i class="monitor-dot monitor-dot-ram"></i>RAM</span>
+        <span><i class="monitor-dot monitor-dot-disk"></i>Disk</span>
+        <span class="admin-table-muted">Oldest → newest</span>
+      </div>
+    {% else %}
+      <p class="admin-muted">No heartbeat metrics recorded yet. The chart starts after the agent checks in.</p>
+    {% endif %}
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Discovery state</h3>
+        <p>Last scan: {{ scan.scanned_at.strftime('%d %b %Y %H:%M UTC') if scan else 'not run' }}</p>
+      </div>
+    </div>
+    <dl class="admin-detail-list">
+      <div><dt>SSH connection</dt><dd>{{ server.connection_status.value }} <span>{{ server.last_ssh_connected_at.strftime('%d %b %Y %H:%M UTC') if server.last_ssh_connected_at else 'never' }}</span></dd></div>
+      <div><dt>Host key</dt><dd class="admin-fingerprint">{{ server.host_key_fingerprint or 'Not recorded' }}</dd></div>
+      <div><dt>Last heartbeat</dt><dd>{{ server.last_heartbeat_at.strftime('%d %b %Y %H:%M UTC') if server.last_heartbeat_at else 'Never' }}</dd></div>
+      <div><dt>Public address</dt><dd>{{ network.get('public_ip') or server.ip_address or 'Unknown' }}</dd></div>
+      <div><dt>Listening ports</dt><dd>{{ network.get('listening_ports', [])|join(', ') or 'Not collected' }}</dd></div>
+      <div><dt>Scan warnings</dt><dd>{{ scan.warnings|length if scan else 0 }}</dd></div>
+    </dl>
+  </section>
+</div>
+
+{% if scan %}
+<section class="admin-panel">
+  <div class="admin-panel-head">
+    <div>
+      <h3>Scan findings</h3>
+      <p>Existing software and hosted resources discovered over the verified SSH session.</p>
+    </div>
+  </div>
+  <div class="admin-scan-grid">
+    <div>
+      <h4>Software services</h4>
+      <dl class="admin-detail-list">
+        <div><dt>Python</dt><dd>{{ software.get('python', {}).get('version') or 'Not installed' }}</dd></div>
+        <div><dt>Git</dt><dd>{{ software.get('git', {}).get('version') or 'Not installed' }}</dd></div>
+        <div><dt>Gunicorn</dt><dd>{{ software.get('gunicorn', {}).get('version') or 'Not installed' }}</dd></div>
+        {% for name, status in software.get('services', {}).items() %}
+          <div><dt>{{ name }}</dt><dd>{{ status }}</dd></div>
+        {% endfor %}
+      </dl>
+    </div>
+    <div>
+      <h4>Nginx server names</h4>
+      {% if hosting.get('nginx_server_names') %}
+        <div class="admin-chip-list">
+          {% for name in hosting.get('nginx_server_names') %}<span>{{ name }}</span>{% endfor %}
+        </div>
+      {% else %}
+        <p class="admin-muted">No server names found.</p>
+      {% endif %}
+      <h4>Hosting directories</h4>
+      {% if hosting.get('directories') %}
+        <ul class="admin-path-list">{% for path in hosting.get('directories') %}<li><code>{{ path }}</code></li>{% endfor %}</ul>
+      {% else %}
+        <p class="admin-muted">No hosting directories found.</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if software.get('containers') %}
+    <div class="admin-table-wrap admin-scan-table">
+      <table class="admin-table">
+        <thead><tr><th>Container</th><th>Image</th><th>State</th><th>Status</th><th>Ports</th></tr></thead>
+        <tbody>
+          {% for container in software.get('containers') %}
+            <tr>
+              <td>{{ container.get('name') }}</td>
+              <td class="admin-table-muted">{{ container.get('image') }}</td>
+              <td>{{ container.get('state') }}</td>
+              <td class="admin-table-muted">{{ container.get('status') }}</td>
+              <td class="admin-table-muted">{{ container.get('ports') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+  {% if scan.warnings %}
+    <div class="admin-alert admin-alert-warning admin-scan-alert">
+      <strong>Warnings</strong>
+      <ul>{% for warning in scan.warnings %}<li>{{ warning }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+  {% if scan.errors %}
+    <div class="admin-alert admin-alert-error admin-scan-alert">
+      <strong>Scan errors</strong>
+      <ul>{% for error in scan.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    </div>
+  {% endif %}
+</section>
+{% endif %}
+
+<div class="admin-columns admin-server-columns">
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Agent enrollment</h3>
+        <p>Install or refresh the signed deployment agent over SSH.</p>
+      </div>
+      <span class="admin-badge {{ 'admin-badge-success' if server.agent_install_status.value == 'installed' else ('admin-badge-danger' if server.agent_install_status.value == 'failed' else 'admin-badge-muted') }}">{{ server.agent_install_status.value.replace('_', ' ') }}</span>
+    </div>
+    {% if server.agents %}
+      <ul class="admin-agent-list">
+        {% for agent in agents %}
+          <li>
+            <div>
+              <strong>{{ agent.name }}</strong>
+              <span>{{ agent.agent_uid }} · {{ agent.version or 'unknown version' }}</span>
+            </div>
+            <span class="admin-badge {{ 'admin-badge-success' if agent.is_online else 'admin-badge-muted' }}">{{ 'online' if agent.is_online else agent.status.value }}</span>
+            <span class="admin-table-muted">{{ agent.last_seen_at.strftime('%d %b %H:%M') if agent.last_seen_at else 'never seen' }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% if server.approval_status.value != 'rejected' and not (server.agents|selectattr('is_online')|list) %}
+      <form method="post" action="{{ url_for('admin_servers.install_agent_route', server_id=server.id) }}" class="admin-form admin-compact-form" autocomplete="off">
+        {{ rescan_form.hidden_tag() }}
+        <label class="admin-field" for="install-private-key">
+          <span>SSH private key</span>
+          {{ rescan_form.private_key(id="install-private-key", class_="admin-textarea") }}
+        </label>
+        <label class="admin-field" for="install-passphrase">
+          <span>Private key passphrase (optional)</span>
+          {{ rescan_form.key_passphrase(id="install-passphrase") }}
+        </label>
+        <label class="admin-field" for="install-fingerprint">
+          <span>Host key override (optional)</span>
+          {{ rescan_form.host_key_fingerprint(id="install-fingerprint", placeholder=server.host_key_fingerprint or "SHA256:...") }}
+        </label>
+        <label class="admin-field" for="install-sudo">
+          <span>sudo password (optional)</span>
+          {{ rescan_form.sudo_password(id="install-sudo") }}
+        </label>
+        <p class="admin-form-note">The key is used only for this request. Enrollment tokens are single-use and expire automatically.</p>
+        <button class="admin-primary" type="submit">Install agent</button>
+      </form>
+    {% elif not (server.agents|selectattr('is_online')|list) %}
+      <p class="admin-muted">Rejected servers cannot receive an agent.</p>
+    {% endif %}
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Reconnect and rescan</h3>
+        <p>Use the stored SSH username and port with a fresh key.</p>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('admin_servers.rescan', server_id=server.id) }}" class="admin-form admin-compact-form" autocomplete="off">
+      {{ rescan_form.hidden_tag() }}
+      <label class="admin-field" for="rescan-private-key">
+        <span>SSH private key</span>
+        <textarea class="admin-textarea" id="rescan-private-key" name="private_key" rows="6" autocomplete="off" spellcheck="false" required placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+      </label>
+      <label class="admin-field" for="rescan-passphrase">
+        <span>Private key passphrase (optional)</span>
+        <input id="rescan-passphrase" name="key_passphrase" type="password" autocomplete="new-password">
+      </label>
+      <label class="admin-field" for="rescan-fingerprint">
+        <span>Host key override (optional)</span>
+        <input id="rescan-fingerprint" name="host_key_fingerprint" type="text" autocomplete="off" placeholder="{{ server.host_key_fingerprint or 'SHA256:...' }}">
+      </label>
+      <label class="admin-field" for="rescan-sudo">
+        <span>sudo password (optional)</span>
+        <input id="rescan-sudo" name="sudo_password" type="password" autocomplete="new-password">
+      </label>
+      <label class="admin-check">
+        <input type="checkbox" name="install_agent" value="y">
+        <span>Install the agent after this scan</span>
+      </label>
+      <button class="admin-secondary" type="submit">Reconnect and scan</button>
+    </form>
+  </section>
+</div>
+
+<section class="admin-panel">
+  <div class="admin-panel-head">
+    <div>
+      <h3>Recent agent tasks</h3>
+      <p>Latest work delivered to this server’s primary agent.</p>
+    </div>
+  </div>
+  {% if recent_tasks %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Task</th><th>Status</th><th>Attempts</th><th>Created</th></tr></thead>
+        <tbody>
+          {% for task in recent_tasks %}
+            <tr>
+              <td>{{ task.task_type.value }}</td>
+              <td><span class="admin-badge admin-badge-muted">{{ task.status.value }}</span></td>
+              <td>{{ task.attempts }}</td>
+              <td class="admin-table-muted">{{ task.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="admin-muted">No tasks have been delivered to an agent for this server.</p>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin-servers.js') }}" defer></script>
+{% endblock %}

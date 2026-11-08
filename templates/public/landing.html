@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js"{% if current_user.is_authenticated %} data-authenticated="true"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>ServerPilot by TechOrigin — Deploy. Manage. Scale.</title>
+  <meta name="description" content="ServerPilot gives developers complete control over application deployment, hosting, domains and infrastructure from one intelligent control plane.">
+  <meta property="og:title" content="ServerPilot by TechOrigin">
+  <meta property="og:description" content="Your infrastructure. Your control. Your deployment.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/brand/favicon.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/brand/apple-touch-icon.png') }}">
+  <link rel="preload" as="image" href="{{ url_for('static', filename='images/brand/techorigin-logo-transparent.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/public.css') }}">
+  <script src="{{ url_for('static', filename='js/landing-head.js') }}"></script>
+</head>
+<body class="landing-body">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <svg class="svg-sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></symbol>
+    <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.9 1.53 2.35 1.09 2.92.83.09-.65.35-1.09.63-1.34-2.22-.25-4.56-1.11-4.56-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.69-4.57 4.94.36.31.68.92.68 1.85v2.74c0 .26.18.58.69.48A10 10 0 0 0 12 2Z"/></symbol>
+    <symbol id="i-control" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 8h4M7 12h10M7 16h6"/></symbol>
+    <symbol id="i-agent" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="6" rx="1.6"/><rect x="4" y="14" width="16" height="6" rx="1.6"/><path d="M7.5 8h.01M7.5 17h.01M11 8h6M11 17h6"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 24 24"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4.4 7.7 7.6 4.4 7.6-4.4M12 12.1V21"/></symbol>
+    <symbol id="i-proxy" viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h14"/><circle cx="8" cy="7" r="1.4"/><circle cx="16" cy="12" r="1.4"/><circle cx="10" cy="17" r="1.4"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 6.8 9.2 4.4 4.4 0 0 0 7 18Z"/><path d="M9 14h6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.8 12h16.4M12 3.5c2.2 2.4 3.3 5.3 3.3 8.5S14.2 18.1 12 20.5C9.8 18.1 8.7 15.2 8.7 12S9.8 5.9 12 3.5Z"/></symbol>
+    <symbol id="i-live" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.5"/><path d="M7.4 7.4a6.5 6.5 0 0 0 0 9.2M16.6 7.4a6.5 6.5 0 0 1 0 9.2M4.6 4.6a10.5 10.5 0 0 0 0 14.8M19.4 4.6a10.5 10.5 0 0 1 0 14.8"/></symbol>
+    <symbol id="i-deploy" viewBox="0 0 24 24"><path d="M12 16V4M8 8l4-4 4 4"/><path d="M5 14v4.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V14"/></symbol>
+    <symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.5"/><rect x="3" y="14" width="18" height="6" rx="1.5"/><path d="M7 7h.01M7 17h.01M11 7h6M11 17h6"/></symbol>
+    <symbol id="i-dns" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.8 9h16.4M3.8 15h16.4"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 24 24"><path d="M4 16a8 8 0 1 1 16 0"/><path d="m12 12 4-3"/><circle cx="12" cy="12" r="1.2"/><path d="M4 16h2M18 16h2M12 20v-2"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3M12.5 15H17"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.7-3.1 2.8-4.5 5.5-4.5s4.8 1.4 5.5 4.5M16 5.5a3 3 0 0 1 0 5.8M17 14.8c2.1.4 3.4 1.8 3.9 4.2"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="10" rx="2"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10M12 14v2.5"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7" ry="2.5"/><path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6"/></symbol>
+    <symbol id="i-queue" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h13"/><circle cx="18" cy="12" r="1.2"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="8.5" cy="15.5" r="3.5"/><path d="m11 13 8-8M16 5l3 3M14 7l2.5 2.5"/></symbol>
+    <symbol id="i-audit" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 8h7M8.5 12h7M8.5 16h4"/></symbol>
+    <symbol id="i-quota" viewBox="0 0 24 24"><path d="M4 7h16v10H4z"/><path d="M8 7V5h8v2M8 12h8"/></symbol>
+    <symbol id="i-access" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 10 4-1.7 7-5.6 7-10V6l-7-3Z"/><circle cx="12" cy="11" r="2.2"/><path d="M9.5 16c.4-1.4 1.3-2 2.5-2s2.1.6 2.5 2"/></symbol>
+  </svg>
+
+  <div class="intro" data-intro>
+    <div class="intro-visual" aria-hidden="true">
+      <div class="intro-ambient"></div>
+      <div class="intro-grid"></div>
+      <span class="intro-particle intro-particle-a"></span>
+      <span class="intro-particle intro-particle-b"></span>
+      <span class="intro-particle intro-particle-c"></span>
+      <div class="intro-stage intro-stage-brand">
+        <div class="intro-logo-wrap">
+          <img class="intro-logo" src="{{ url_for('static', filename='images/brand/techorigin-logo-transparent.png') }}" alt="" width="800" height="267" fetchpriority="high" decoding="async">
+        </div>
+        <p class="intro-brand-name">TECHORIGIN</p>
+        <p class="intro-brand-tagline">Building the infrastructure behind tomorrow.</p>
+        <span class="intro-rule"></span>
+      </div>
+      <div class="intro-stage intro-stage-product">
+        <p class="intro-product-kicker">Introducing</p>
+        <p class="intro-product-name">SERVERPILOT</p>
+        <p class="intro-product-by">by TechOrigin</p>
+        <p class="intro-product-tagline">Your infrastructure. Your control. Your deployment.</p>
+      </div>
+    </div>
+    <button class="intro-skip-btn" type="button" data-intro-skip>Skip intro <span aria-hidden="true">→</span></button>
+    <div class="intro-progress" aria-hidden="true"><span></span></div>
+  </div>
+
+  <div class="page" id="page">
+    <header class="site-header" data-site-header>
+      <div class="nav-inner">
+        <a class="nav-brand" href="{{ url_for('public.index') }}" aria-label="ServerPilot by TechOrigin — home">
+          <img class="nav-logo nav-logo-full" src="{{ url_for('static', filename='images/brand/techorigin-logo-transparent.png') }}" alt="" width="800" height="267" decoding="async">
+          <img class="nav-logo nav-logo-mark" src="{{ url_for('static', filename='images/brand/techorigin-mark.png') }}" alt="" width="512" height="512" decoding="async">
+          <span class="nav-brand-divider" aria-hidden="true"></span>
+          <span class="nav-brand-name">ServerPilot</span>
+        </a>
+
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#product" data-nav-link>Product</a>
+          <a href="#features" data-nav-link>Features</a>
+          <a href="#infrastructure" data-nav-link>Infrastructure</a>
+          <a href="#how-it-works" data-nav-link>How it works</a>
+          <a href="#pricing" data-nav-link>Pricing</a>
+        </nav>
+
+        <div class="nav-actions">
+          {% if current_user.is_authenticated %}
+            <a class="nav-signin" href="{{ url_for('dashboard.index') }}">Dashboard</a>
+            <a class="btn btn-primary btn-nav" href="{{ url_for('sites.new') }}">New website</a>
+          {% else %}
+            <a class="nav-signin" href="{{ url_for('auth.login') }}">Sign in</a>
+            <a class="btn btn-primary btn-nav" href="{{ url_for('auth.login', next=url_for('sites.new')) }}">Get started</a>
+          {% endif %}
+        </div>
+
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" aria-label="Open navigation" data-nav-toggle>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <div class="mobile-menu" id="mobile-menu" data-mobile-menu hidden>
+        <nav class="mobile-links" aria-label="Mobile primary">
+          <a href="#product" data-nav-link>Product</a>
+          <a href="#features" data-nav-link>Features</a>
+          <a href="#infrastructure" data-nav-link>Infrastructure</a>
+          <a href="#how-it-works" data-nav-link>How it works</a>
+          <a href="#pricing" data-nav-link>Pricing</a>
+        </nav>
+        <div class="mobile-actions">
+          {% if current_user.is_authenticated %}
+            <a class="btn btn-ghost" href="{{ url_for('dashboard.index') }}">Dashboard</a>
+            <a class="btn btn-primary" href="{{ url_for('sites.new') }}">New website</a>
+          {% else %}
+            <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Sign in</a>
+            <a class="btn btn-primary" href="{{ url_for('auth.login', next=url_for('sites.new')) }}">Get started</a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="container hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow reveal" style="--reveal-delay: 40ms"><span class="eyebrow-dot"></span> POWERED BY TECHORIGIN</p>
+            <h1 id="hero-title" class="reveal" style="--reveal-delay: 100ms">Deploy. Manage.<br><span>Scale.</span></h1>
+            <p class="hero-sub reveal" style="--reveal-delay: 160ms">Your applications deserve better infrastructure.</p>
+            <p class="hero-lede reveal" style="--reveal-delay: 220ms">ServerPilot gives developers complete control over application deployment, hosting, domains and infrastructure — all from one intelligent control panel.</p>
+            <div class="hero-actions reveal" style="--reveal-delay: 280ms">
+              {% if current_user.is_authenticated %}
+                <a class="btn btn-primary btn-lg" href="{{ url_for('sites.new') }}">Start deploying <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+              {% else %}
+                <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login', next=url_for('sites.new')) }}">Start deploying <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+              {% endif %}
+              <a class="btn btn-ghost btn-lg" href="#product">Explore the platform</a>
+            </div>
+            <ul class="hero-badges reveal" style="--reveal-delay: 340ms" aria-label="Platform capabilities">
+              <li><svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg> Secure deployments</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-dns"/></svg> Automated DNS</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-gauge"/></svg> Real-time monitoring</li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-server"/></svg> Centralized infrastructure</li>
+            </ul>
+          </div>
+
+          <div class="hero-visual reveal" style="--reveal-delay: 260ms">
+            <div class="pipeline-card" aria-label="Conceptual deployment pipeline">
+              <div class="pipeline-head">
+                <div>
+                  <span class="pipeline-kicker">Deployment flow</span>
+                  <strong>Source to live traffic</strong>
+                </div>
+                <span class="pipeline-badge">Conceptual</span>
+              </div>
+              <ol class="pipeline">
+                <li class="pipeline-step" style="--step: 0">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></span>
+                  <span class="pipeline-copy"><strong>GitHub Repository</strong><small>Source of truth</small></span>
+                  <span class="pipeline-state">Source</span>
+                </li>
+                <li class="pipeline-step" style="--step: 1">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-control"/></svg></span>
+                  <span class="pipeline-copy"><strong>ServerPilot Control Plane</strong><small>Auth, quotas and orchestration</small></span>
+                  <span class="pipeline-state">Control</span>
+                </li>
+                <li class="pipeline-step" style="--step: 2">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-agent"/></svg></span>
+                  <span class="pipeline-copy"><strong>Deployment Agent</strong><small>Signed task execution</small></span>
+                  <span class="pipeline-state">Execute</span>
+                </li>
+                <li class="pipeline-step" style="--step: 3">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-cube"/></svg></span>
+                  <span class="pipeline-copy"><strong>Docker Container</strong><small>Isolated application runtime</small></span>
+                  <span class="pipeline-state">Runtime</span>
+                </li>
+                <li class="pipeline-step" style="--step: 4">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-proxy"/></svg></span>
+                  <span class="pipeline-copy"><strong>Nginx Reverse Proxy</strong><small>Routing and request handling</small></span>
+                  <span class="pipeline-state">Proxy</span>
+                </li>
+                <li class="pipeline-step" style="--step: 5">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-cloud"/></svg></span>
+                  <span class="pipeline-copy"><strong>Cloudflare DNS</strong><small>Domain routing and edge</small></span>
+                  <span class="pipeline-state">Edge</span>
+                </li>
+                <li class="pipeline-step pipeline-step-final" style="--step: 6">
+                  <span class="pipeline-icon"><svg class="icon" aria-hidden="true"><use href="#i-live"/></svg></span>
+                  <span class="pipeline-copy"><strong>Live Website</strong><small>Accessible on your domain</small></span>
+                  <span class="pipeline-state">Live</span>
+                </li>
+              </ol>
+              <div class="pipeline-foot">
+                <span class="pipeline-foot-dot" aria-hidden="true"></span>
+                Pipeline illustration — not live deployment data
+              </div>
+            </div>
+            <div class="hero-orbit" aria-hidden="true"></div>
+          </div>
+        </div>
+        <div class="hero-scroll" aria-hidden="true">
+          <span>Scroll to explore</span>
+          <span class="hero-scroll-line"></span>
+        </div>
+      </section>
+
+      <section class="section product-section" id="product" aria-labelledby="product-title">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="section-kicker">Product</p>
+            <h2 id="product-title">One control plane for the entire deployment lifecycle.</h2>
+            <p>Website overview, deployment status, resource monitoring, server health, activity and domains — brought together in a focused operator experience.</p>
+          </div>
+
+          <div class="showcase reveal" style="--reveal-delay: 100ms">
+            <div class="showcase-glow" aria-hidden="true"></div>
+            <div class="browser-frame">
+              <div class="browser-bar">
+                <span class="browser-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="browser-address">
+                  <svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>
+                  app.{{ runtime_settings.domain or 'techorigin.online' }}/dashboard
+                </span>
+                <span class="preview-badge">Illustrative preview</span>
+              </div>
+              <div class="app-preview" aria-label="Illustrative ServerPilot dashboard preview">
+                <aside class="preview-sidebar" aria-hidden="true">
+                  <div class="preview-brand">
+                    <img src="{{ url_for('static', filename='images/brand/techorigin-mark.png') }}" alt="" width="512" height="512">
+                    <span>ServerPilot</span>
+                  </div>
+                  <div class="preview-nav">
+                    <span class="preview-nav-label">Workspace</span>
+                    <span class="preview-nav-item is-active"><svg class="icon"><use href="#i-control"/></svg> Overview</span>
+                    <span class="preview-nav-item"><svg class="icon"><use href="#i-globe"/></svg> Websites</span>
+                    <span class="preview-nav-item"><svg class="icon"><use href="#i-deploy"/></svg> Deployments</span>
+                    <span class="preview-nav-item"><svg class="icon"><use href="#i-dns"/></svg> Domains</span>
+                    <span class="preview-nav-item"><svg class="icon"><use href="#i-server"/></svg> Servers</span>
+                  </div>
+                  <div class="preview-account">
+                    <span class="preview-avatar">SP</span>
+                    <span><strong>Workspace</strong><small>Free plan</small></span>
+                  </div>
+                </aside>
+
+                <div class="preview-main">
+                  <div class="preview-topbar">
+                    <div>
+                      <span class="preview-kicker">Workspace</span>
+                      <strong>Overview</strong>
+                    </div>
+                    <div class="preview-topbar-meta">
+                      <span class="preview-pill">{{ app_environment }}</span>
+                      <span class="preview-pill preview-pill-muted">{{ runtime_settings.domain or 'domain not set' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="preview-metrics">
+                    <article class="preview-metric">
+                      <span>Websites</span>
+                      <strong>3<span>/ {{ plan_limits.max_websites }}</span></strong>
+                      <small>Free plan slots</small>
+                    </article>
+                    <article class="preview-metric">
+                      <span>Running</span>
+                      <strong>2</strong>
+                      <small>Deployed websites</small>
+                    </article>
+                    <article class="preview-metric">
+                      <span>Shared RAM</span>
+                      <strong>{{ plan_limits.ram_limit_mb }}<span> MB</span></strong>
+                      <small>Account quota</small>
+                    </article>
+                    <article class="preview-metric">
+                      <span>Shared storage</span>
+                      <strong>{{ plan_limits.storage_limit_gb }}<span> GB</span></strong>
+                      <small>Account quota</small>
+                    </article>
+                  </div>
+
+                  <div class="preview-grid">
+                    <section class="preview-panel preview-panel-wide">
+                      <div class="preview-panel-head">
+                        <div><strong>Your websites</strong><span>Applications and current state</span></div>
+                        <span class="preview-demo">Demo data</span>
+                      </div>
+                      <div class="preview-table-wrap">
+                        <table class="preview-table">
+                          <thead><tr><th>Website</th><th>Domain</th><th>Status</th><th>Created</th></tr></thead>
+                          <tbody>
+                            <tr>
+                              <td><strong>marketing-site</strong><small>github.com/example/marketing</small></td>
+                              <td>www.{{ runtime_settings.domain or 'example.com' }}</td>
+                              <td><span class="preview-status is-running">running</span></td>
+                              <td>12 Mar</td>
+                            </tr>
+                            <tr>
+                              <td><strong>api-service</strong><small>github.com/example/api</small></td>
+                              <td>api.{{ runtime_settings.domain or 'example.com' }}</td>
+                              <td><span class="preview-status is-running">running</span></td>
+                              <td>08 Mar</td>
+                            </tr>
+                            <tr>
+                              <td><strong>docs-preview</strong><small>github.com/example/docs</small></td>
+                              <td>docs.{{ runtime_settings.domain or 'example.com' }}</td>
+                              <td><span class="preview-status is-building">building</span></td>
+                              <td>04 Mar</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+
+                    <section class="preview-panel">
+                      <div class="preview-panel-head">
+                        <div><strong>Deployment activity</strong><span>Recent builds</span></div>
+                        <span class="preview-demo">Demo</span>
+                      </div>
+                      <ol class="preview-activity">
+                        <li><span class="preview-activity-dot is-ok"></span><div><strong>#12 succeeded</strong><small>marketing-site · main · 48s</small></div></li>
+                        <li><span class="preview-activity-dot is-ok"></span><div><strong>#11 succeeded</strong><small>api-service · main · 1m 12s</small></div></li>
+                        <li><span class="preview-activity-dot is-live"></span><div><strong>#13 building</strong><small>docs-preview · main · running</small></div></li>
+                      </ol>
+                    </section>
+
+                    <section class="preview-panel">
+                      <div class="preview-panel-head">
+                        <div><strong>Resource monitoring</strong><span>Agent-reported usage</span></div>
+                        <span class="preview-demo">Demo</span>
+                      </div>
+                      <div class="preview-resource">
+                        <div class="preview-resource-row"><span>RAM</span><strong>42%</strong><div class="preview-bar"><i style="width: 42%"></i></div></div>
+                        <div class="preview-resource-row"><span>CPU</span><strong>18%</strong><div class="preview-bar"><i style="width: 18%"></i></div></div>
+                        <div class="preview-resource-row"><span>Storage</span><strong>21%</strong><div class="preview-bar"><i style="width: 21%"></i></div></div>
+                      </div>
+                    </section>
+
+                    <section class="preview-panel">
+                      <div class="preview-panel-head">
+                        <div><strong>Server health</strong><span>Runtime and agent state</span></div>
+                        <span class="preview-demo">Demo</span>
+                      </div>
+                      <ul class="preview-health">
+                        <li><span>Deployment agent</span><strong class="is-ok">connected</strong></li>
+                        <li><span>Docker runtime</span><strong class="is-ok">tracked</strong></li>
+                        <li><span>Nginx proxy</span><strong class="is-ok">configured</strong></li>
+                        <li><span>Last heartbeat</span><strong>12s ago</strong></li>
+                      </ul>
+                    </section>
+
+                    <section class="preview-panel">
+                      <div class="preview-panel-head">
+                        <div><strong>Domain management</strong><span>Routing and DNS</span></div>
+                        <span class="preview-demo">Demo</span>
+                      </div>
+                      <ul class="preview-health">
+                        <li><span>Allowed domain</span><strong>{{ runtime_settings.domain or 'Not configured' }}</strong></li>
+                        <li><span>Cloudflare DNS</span><strong class="{{ 'is-ok' if cloudflare_enabled else 'is-muted' }}">{{ 'configured' if cloudflare_enabled else 'not configured' }}</strong></li>
+                        <li><span>Routing</span><strong class="is-ok">nginx</strong></li>
+                        <li><span>Website status</span><strong class="is-ok">running</strong></li>
+                      </ul>
+                    </section>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="showcase-note">Interface preview built from the ServerPilot design system. Metrics and deployment rows are illustrative, not live account data.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section features-section" id="features" aria-labelledby="features-title">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="section-kicker">Capabilities</p>
+            <h2 id="features-title">Everything the platform actually does.</h2>
+            <p>No ornamental dashboards. Each capability below maps to a working part of the ServerPilot control plane.</p>
+          </div>
+          <div class="feature-grid">
+            <article class="feature-card reveal" style="--reveal-delay: 40ms">
+              <span class="feature-index">01</span>
+              <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-deploy"/></svg></span>
+              <h3>One-click deployments</h3>
+              <p>Connect repositories and deploy applications through an automated workflow.</p>
+              <span class="feature-meta">GitHub App · deployment queue</span>
+            </article>
+            <article class="feature-card reveal" style="--reveal-delay: 90ms">
+              <span class="feature-index">02</span>
+              <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-server"/></svg></span>
+              <h3>Intelligent infrastructure</h3>
+              <p>Manage approved servers and monitor their availability.</p>
+              <span class="feature-meta">Servers · agents · health</span>
+            </article>
+            <article class="feature-card reveal" style="--reveal-delay: 140ms">
+              <span class="feature-index">03</span>
+              <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-dns"/></svg></span>
+              <h3>Automated DNS</h3>
+              <p>Connect deployments to domains through Cloudflare integration.</p>
+              <span class="feature-meta">Domains · DNS records</span>
+            </article>
+            <article class="feature-card reveal" style="--reveal-delay: 40ms">
+              <span class="feature-index">04</span>
+              <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-gauge"/></svg></span>
+              <h3>Resource management</h3>
+              <p>Monitor RAM, CPU and storage consumption.</p>
+              <span class="feature-meta">Quotas · measured usage</span>
+            </article>
+            <article class="feature-card reveal" style="--reveal-delay: 90ms">
+              <span class="feature-index">05</span>
+              <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-terminal"/></svg></span>
+              <h3>Deployment control</h3>
+              <p>Manage builds, logs, restarts, rollbacks and website status.</p>
+              <span class="feature-meta">Logs · history · backups</span>
+            </article>
+            <article class="feature-card reveal" style="--reveal-delay: 140ms">
+              <span class="feature-index">06</span>
+              <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg></span>
+              <h3>Centralized administration</h3>
+              <p>Manage users, domains, infrastructure and deployment activity.</p>
+              <span class="feature-meta">Operator console · audit trail</span>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section how-section" id="how-it-works" aria-labelledby="how-title">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="section-kicker">How it works</p>
+            <h2 id="how-title">From repository to live website.</h2>
+            <p>A deliberate four-step path with explicit ownership and verification at every stage.</p>
+          </div>
+          <div class="steps">
+            <article class="step reveal" style="--reveal-delay: 40ms">
+              <span class="step-number">01</span>
+              <span class="step-icon"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></span>
+              <h3>Connect</h3>
+              <p>Connect your GitHub repository through a verified GitHub App installation.</p>
+            </article>
+            <article class="step reveal" style="--reveal-delay: 100ms">
+              <span class="step-number">02</span>
+              <span class="step-icon"><svg class="icon" aria-hidden="true"><use href="#i-control"/></svg></span>
+              <h3>Configure</h3>
+              <p>Select branch, application settings and environment variables.</p>
+            </article>
+            <article class="step reveal" style="--reveal-delay: 160ms">
+              <span class="step-number">03</span>
+              <span class="step-icon"><svg class="icon" aria-hidden="true"><use href="#i-cube"/></svg></span>
+              <h3>Deploy</h3>
+              <p>ServerPilot builds and deploys your application through the connected agent.</p>
+            </article>
+            <article class="step reveal" style="--reveal-delay: 220ms">
+              <span class="step-number">04</span>
+              <span class="step-icon"><svg class="icon" aria-hidden="true"><use href="#i-live"/></svg></span>
+              <h3>Go live</h3>
+              <p>Configure routing, verify DNS and access your website on its domain.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section infra-section" id="infrastructure" aria-labelledby="infra-title">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="section-kicker">Infrastructure</p>
+            <h2 id="infra-title">A control plane with a clear perimeter.</h2>
+            <p>Platform services, integrations and the remote deployment path stay deliberately separated.</p>
+          </div>
+
+          <div class="arch-board reveal" style="--reveal-delay: 80ms">
+            <div class="arch-tier arch-tier-integrations">
+              <article class="arch-node">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-github"/></svg></span>
+                <div><strong>GitHub App</strong><small>Repository access</small></div>
+              </article>
+              <article class="arch-node">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-cloud"/></svg></span>
+                <div><strong>Cloudflare</strong><small>DNS and edge routing</small></div>
+              </article>
+            </div>
+
+            <div class="arch-connector" aria-hidden="true"><span></span></div>
+
+            <div class="arch-core-row">
+              <div class="arch-side">
+                <article class="arch-node">
+                  <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-database"/></svg></span>
+                  <div><strong>PostgreSQL</strong><small>Control state</small></div>
+                </article>
+                <article class="arch-node">
+                  <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-queue"/></svg></span>
+                  <div><strong>Redis + Celery</strong><small>Queues and realtime</small></div>
+                </article>
+              </div>
+              <article class="arch-node arch-node-core">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-control"/></svg></span>
+                <div>
+                  <strong>ServerPilot Control Plane</strong>
+                  <small>Authentication · quotas · deployments · audit</small>
+                </div>
+              </article>
+            </div>
+
+            <div class="arch-connector" aria-hidden="true"><span></span></div>
+
+            <div class="arch-tier arch-tier-runtime">
+              <article class="arch-node">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-agent"/></svg></span>
+                <div><strong>Remote Deployment Agent</strong><small>Signed task execution</small></div>
+              </article>
+              <span class="arch-arrow" aria-hidden="true">→</span>
+              <article class="arch-node">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-server"/></svg></span>
+                <div><strong>Ubuntu Servers</strong><small>Approved infrastructure</small></div>
+              </article>
+              <span class="arch-arrow" aria-hidden="true">→</span>
+              <article class="arch-node">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-cube"/></svg></span>
+                <div><strong>Docker</strong><small>Isolated containers</small></div>
+              </article>
+              <span class="arch-arrow" aria-hidden="true">→</span>
+              <article class="arch-node">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-proxy"/></svg></span>
+                <div><strong>Nginx</strong><small>Reverse proxy</small></div>
+              </article>
+              <span class="arch-arrow" aria-hidden="true">→</span>
+              <article class="arch-node arch-node-live">
+                <span class="arch-node-icon"><svg class="icon" aria-hidden="true"><use href="#i-live"/></svg></span>
+                <div><strong>Live Website</strong><small>Your domain</small></div>
+              </article>
+            </div>
+          </div>
+
+          <div class="integration-status reveal" style="--reveal-delay: 140ms" aria-label="Integration configuration status">
+            <span class="status-chip {{ 'is-on' if runtime_settings.deployments_enabled else 'is-off' }}"><span class="status-dot"></span> Deployments {{ 'accepting' if runtime_settings.deployments_enabled else 'paused' }}</span>
+            <span class="status-chip {{ 'is-on' if github_app_enabled else 'is-off' }}"><span class="status-dot"></span> GitHub App {{ 'configured' if github_app_enabled else 'not configured' }}</span>
+            <span class="status-chip {{ 'is-on' if cloudflare_enabled else 'is-off' }}"><span class="status-dot"></span> Cloudflare {{ 'configured' if cloudflare_enabled else 'not configured' }}</span>
+            <span class="status-chip {{ 'is-on' if google_oauth_enabled else 'is-off' }}"><span class="status-dot"></span> Google OAuth {{ 'configured' if google_oauth_enabled else 'not configured' }}</span>
+            <span class="status-chip {{ 'is-on' if github_oauth_enabled else 'is-off' }}"><span class="status-dot"></span> GitHub OAuth {{ 'configured' if github_oauth_enabled else 'not configured' }}</span>
+          </div>
+          <p class="integration-note reveal" style="--reveal-delay: 180ms">Integration labels reflect the backend configuration of this deployment. No unverified integration is shown as active.</p>
+        </div>
+      </section>
+
+      <section class="section security-section" id="security" aria-labelledby="security-title">
+        <div class="container security-grid">
+          <div class="security-copy reveal">
+            <p class="section-kicker">Security &amp; reliability</p>
+            <h2 id="security-title">Guardrails are part of the architecture.</h2>
+            <p>ServerPilot treats isolation, ownership and auditability as product requirements — not add-ons.</p>
+            <div class="security-note">
+              <svg class="icon" aria-hidden="true"><use href="#i-shield"/></svg>
+              Only controls implemented in the current platform are described here.
+            </div>
+          </div>
+          <ul class="security-list">
+            <li class="reveal" style="--reveal-delay: 40ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-cube"/></svg></span><div><strong>Isolated application deployments</strong><p>Applications run in dedicated containers with explicit resource boundaries.</p></div></li>
+            <li class="reveal" style="--reveal-delay: 80ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg></span><div><strong>User-level access control</strong><p>Ownership is checked server-side for every website, deployment and setting.</p></div></li>
+            <li class="reveal" style="--reveal-delay: 120ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-key"/></svg></span><div><strong>Protected environment variables</strong><p>Sensitive values are encrypted at rest and never rendered into the public interface.</p></div></li>
+            <li class="reveal" style="--reveal-delay: 40ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-agent"/></svg></span><div><strong>Secure agent communication</strong><p>Deployment tasks are signed and verified before an agent executes them.</p></div></li>
+            <li class="reveal" style="--reveal-delay: 80ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-quota"/></svg></span><div><strong>Resource quotas</strong><p>RAM, storage and website slots are enforced across the account.</p></div></li>
+            <li class="reveal" style="--reveal-delay: 120ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-audit"/></svg></span><div><strong>Audited administrative operations</strong><p>Operator actions and authentication events are recorded.</p></div></li>
+            <li class="reveal" style="--reveal-delay: 40ms"><span class="security-icon"><svg class="icon" aria-hidden="true"><use href="#i-access"/></svg></span><div><strong>Controlled deployment permissions</strong><p>Deployment authorization can require an explicit administrator step.</p></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section pricing-section" id="pricing" aria-labelledby="pricing-title">
+        <div class="container">
+          <div class="section-head reveal">
+            <p class="section-kicker">Pricing</p>
+            <h2 id="pricing-title">Start free. Scale when plans arrive.</h2>
+            <p>The current platform ships with one implemented plan. No paid tier is available for purchase yet.</p>
+          </div>
+          <div class="pricing-grid">
+            <article class="price-card reveal" style="--reveal-delay: 60ms">
+              <div class="price-head">
+                <span class="price-plan">Free</span>
+                <span class="price-badge">Current plan</span>
+              </div>
+              <div class="price-line"><span class="price-amount">$0</span><span class="price-period">forever</span></div>
+              <p class="price-copy">A complete starting point for deploying and managing your first applications.</p>
+              <ul class="price-features">
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Up to {{ plan_limits.max_websites }} websites</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> {{ plan_limits.ram_limit_mb }} MB shared RAM</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> {{ plan_limits.storage_limit_gb }} GB shared storage</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Deployment management</li>
+                <li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg> Website monitoring</li>
+              </ul>
+              {% if current_user.is_authenticated %}
+                <a class="btn btn-primary btn-block" href="{{ url_for('sites.new') }}">Start with Free</a>
+              {% else %}
+                <a class="btn btn-primary btn-block" href="{{ url_for('auth.login', next=url_for('sites.new')) }}">Start with Free</a>
+              {% endif %}
+              <p class="price-note">Additional plans are in development. Nothing is charged or reserved today.</p>
+            </article>
+            <aside class="pricing-side reveal" style="--reveal-delay: 120ms">
+              <p class="pricing-side-kicker">Plan limits</p>
+              <h3>Clear quotas, measured by the platform.</h3>
+              <p>Limits apply to the account across every website. They are enforced by the backend, not estimated in the browser.</p>
+              <div class="pricing-facts">
+                <div><strong>{{ plan_limits.max_websites }}</strong><span>website slots</span></div>
+                <div><strong>{{ plan_limits.ram_limit_mb }}<small> MB</small></strong><span>shared RAM</span></div>
+                <div><strong>{{ plan_limits.storage_limit_gb }}<small> GB</small></strong><span>shared storage</span></div>
+              </div>
+              <div class="pricing-coming">
+                <span class="pricing-coming-dot" aria-hidden="true"></span>
+                Paid plans are not implemented yet. Future tiers will be announced when available.
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="final-cta" aria-labelledby="cta-title">
+        <div class="container">
+          <div class="cta-panel reveal">
+            <div class="cta-grid" aria-hidden="true"></div>
+            <div class="cta-orb" aria-hidden="true"></div>
+            <p class="section-kicker">Ready when you are</p>
+            <h2 id="cta-title">Your next deployment starts here.</h2>
+            <p>Bring your applications, infrastructure and domains together with ServerPilot.</p>
+            <div class="cta-actions">
+              {% if current_user.is_authenticated %}
+                <a class="btn btn-primary btn-lg" href="{{ url_for('sites.new') }}">Start deploying <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+              {% else %}
+                <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login', next=url_for('sites.new')) }}">Start deploying <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+              {% endif %}
+              <a class="btn btn-ghost btn-lg" href="{{ url_for('auth.login') }}">Sign in</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div class="footer-brand">
+          <a href="{{ url_for('public.index') }}" aria-label="ServerPilot by TechOrigin — home">
+            <img src="{{ url_for('static', filename='images/brand/techorigin-logo-transparent.png') }}" alt="TechOrigin" width="800" height="267" loading="lazy" decoding="async">
+          </a>
+          <p>ServerPilot by TechOrigin</p>
+          <span>Your infrastructure. Your control. Your deployment.</span>
+        </div>
+        <div class="footer-links">
+          <div>
+            <h3>Product</h3>
+            <a href="#product">Overview</a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
+          </div>
+          <div>
+            <h3>Platform</h3>
+            <a href="{{ url_for('public.healthz') }}">Service health</a>
+            <a href="{{ url_for('public.api_root') }}">API root</a>
+            <a href="{{ url_for('auth.login') }}">Sign in</a>
+            <a href="{{ url_for('admin.login') }}">Operator console</a>
+          </div>
+        </div>
+      </div>
+      <div class="container footer-bottom">
+        <span>© {{ current_year }} TechOrigin. All rights reserved.</span>
+        <span class="footer-meta">ServerPilot v{{ app_version }} · {{ app_environment }}</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/landing.js') }}" defer></script>
+</body>
+</html>

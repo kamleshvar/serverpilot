@@ -1,0 +1,116 @@
+{% extends "user/base.html" %}
+{% block title %}Connections · {{ app_name }}{% endblock %}
+{% block kicker %}Account{% endblock %}
+{% block page_title %}Connections{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <h2>Sign-in and source access</h2>
+    <p>Identities are verified through the provider. Tokens are encrypted at rest.</p>
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Sign-in identities</h3>
+      <p>At least one sign-in method must remain connected.</p>
+    </div>
+  </div>
+  <ul class="connection-list">
+    {% for identity in identities %}
+      <li>
+        <div class="connection-identity">
+          <span class="provider-mark provider-{{ identity.provider.value }}">{{ identity.provider.value[:2]|upper }}</span>
+          <div>
+            <strong>{{ identity.provider.value.title() }}</strong>
+            <span>{{ identity.provider_email or identity.provider_login or identity.provider_user_id }}</span>
+          </div>
+        </div>
+        <form method="post" action="{{ url_for('auth.disconnect', provider=identity.provider.value) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="button button-ghost button-small" type="submit" {{ 'disabled' if identities|length <= 1 }}>Disconnect</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+  <div class="connection-actions">
+    {% set providers = identities|map(attribute='provider.value')|list %}
+    {% if google_oauth_enabled and 'google' not in providers %}
+      <a class="button button-ghost button-small" href="{{ url_for('auth.link_profile', provider='google') }}">Link Google</a>
+    {% endif %}
+    {% if github_oauth_enabled and 'github' not in providers %}
+      <a class="button button-ghost button-small" href="{{ url_for('auth.link_profile', provider='github') }}">Link GitHub</a>
+    {% endif %}
+    {% if not google_oauth_enabled and not github_oauth_enabled %}
+      <span class="muted">No OAuth provider is configured on this server.</span>
+    {% endif %}
+  </div>
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>GitHub App installations</h3>
+      <p>Installations grant repository access to deployments. Ownership is verified before linking.</p>
+    </div>
+    {% if installations %}<span class="tag">{{ installations|length }} connected</span>{% endif %}
+  </div>
+
+  {% if not github_app_configured %}
+    <div class="onboarding-body">
+      <p>GitHub App integration is not configured by the operator. Required backend values:</p>
+      <div class="env-list">
+        <code>GITHUB_APP_ID</code>
+        <code>GITHUB_APP_PRIVATE_KEY</code>
+        <code>GITHUB_APP_WEBHOOK_SECRET</code>
+        <code>GITHUB_APP_SLUG</code>
+      </div>
+      <p class="muted">The setup callback must point to <code>/settings/github/setup</code> on this deployment.</p>
+    </div>
+  {% else %}
+    {% if installations %}
+      <ul class="connection-list">
+        {% for installation in installations %}
+          <li>
+            <div class="connection-identity">
+              <span class="provider-mark">GH</span>
+              <div>
+                <strong>{{ installation.account_login }}</strong>
+                <span>{{ installation.account_type }} · {{ installation.repository_selection }} repositories · {{ installation.status.value }}</span>
+              </div>
+            </div>
+            <div class="connection-row-actions">
+              <form method="post" action="{{ url_for('settings.sync_github_installation', installation_id=installation.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="button button-ghost button-small" type="submit">Sync</button>
+              </form>
+              <form method="post" action="{{ url_for('settings.disconnect_installation', installation_id=installation.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="button button-ghost button-small" type="submit">Disconnect</button>
+              </form>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="onboarding-body">
+      {% if not github_oauth_enabled %}
+        <p class="muted">GitHub OAuth is not configured, so installation ownership cannot be verified. Configure GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET.</p>
+      {% else %}
+        <p>Install the App on your GitHub account or organization, then return here. The setup callback verifies ownership automatically.</p>
+        <div class="form-actions">
+          {% if install_url %}
+            <a class="button button-primary" href="{{ install_url }}" rel="noopener" target="_blank">Install GitHub App</a>
+          {% else %}
+            <span class="muted">Set GITHUB_APP_SLUG or GITHUB_APP_SETUP_URL to enable the install link.</span>
+          {% endif %}
+          <a class="button button-ghost" href="{{ url_for('sites.new') }}">Create a website</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

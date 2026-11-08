@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Administrator sign-in · {{ app_name }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body class="admin-body admin-auth-body">
+  <div class="admin-ambient" aria-hidden="true"></div>
+  <main class="admin-auth-shell">
+    <section class="admin-auth-card" aria-labelledby="admin-login-title">
+      <div class="admin-auth-head">
+        <span class="admin-auth-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+            <path d="M12 2.5 21 7v10l-9 4.5L3 17V7l9-4.5Z" stroke="currentColor" stroke-width="1.35"/>
+            <path d="M12 8v9M8.2 10.2 12 8l3.8 2.2" stroke="currentColor" stroke-width="1.35"/>
+          </svg>
+        </span>
+        <p class="admin-auth-kicker">Restricted access</p>
+        <h1 id="admin-login-title">Administrator sign-in</h1>
+        <p class="admin-auth-sub">This console is separate from the user panel. Credentials are not stored in the database.</p>
+      </div>
+
+      {% if not config_ready %}
+        <div class="admin-alert admin-alert-warning">
+          Administrator authentication is not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD_HASH, then provision the database administrator with <code>flask --app wsgi create-admin</code>.
+        </div>
+      {% endif %}
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="admin-alert admin-alert-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('admin.login', next=next_url) }}" class="admin-form" novalidate>
+        {{ form.hidden_tag() }}
+        <input type="hidden" name="next" value="{{ next_url }}">
+
+        <label class="admin-field">
+          <span>{{ form.passcode.label.text }}</span>
+          {{ form.passcode(placeholder="Administrator passcode") }}
+          {% for error in form.passcode.errors %}<em>{{ error }}</em>{% endfor %}
+        </label>
+
+        <button class="admin-primary" type="submit">{{ form.submit.label.text }}</button>
+      </form>
+
+      <p class="admin-auth-foot">Every administrator action is audited. Rate limiting is enforced on sign-in attempts.</p>
+    </section>
+  </main>
+</body>
+</html>

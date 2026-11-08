@@ -1,0 +1,38 @@
+{% extends "admin/base.html" %}
+{% block title %}Domains · {{ app_name }}{% endblock %}
+{% block kicker %}Administration{% endblock %}
+{% block page_title %}Domains{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Managed domains</h3>
+      <p>Cloudflare zone and DNS synchronization is performed by the background worker.</p>
+    </div>
+    <form method="post" action="{{ url_for('admin.sync_domains') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="button button-ghost" type="submit">Sync Cloudflare DNS</button>
+    </form>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Domain</th><th>Status</th><th>DNS</th><th>Zone</th><th>Records</th><th>Last check</th></tr></thead>
+      <tbody>
+        {% for domain in domains %}
+          <tr>
+            <td><strong>{{ domain.name }}</strong><div class="table-muted">{{ 'User selectable' if domain.is_user_allowed else 'Administrator only' }}</div></td>
+            <td><span class="status status-{{ domain.status.value }}">{{ domain.status.value }}</span></td>
+            <td><span class="status status-{{ domain.dns_status.value }}">{{ domain.dns_status.value }}</span></td>
+            <td class="table-muted">{{ domain.cloudflare_zone_name or 'Not linked' }}</td>
+            <td class="table-muted">{{ domain.dns_records|length if domain.dns_records else 0 }}</td>
+            <td class="table-muted">{{ domain.last_dns_check_at.strftime('%d %b %Y %H:%M') if domain.last_dns_check_at else '—' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="table-muted">No domains are configured.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

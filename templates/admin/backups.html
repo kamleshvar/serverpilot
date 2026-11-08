@@ -1,0 +1,35 @@
+{% extends "admin/base.html" %}
+{% block title %}Backups · {{ app_name }}{% endblock %}
+{% block kicker %}Administration{% endblock %}
+{% block page_title %}Backups{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Backup inventory</h3>
+      <p>Archives live on the agent host and expire automatically after the retention window.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Website</th><th>Scope</th><th>Status</th><th>Size</th><th>Created</th><th>Expires</th><th>Error</th></tr></thead>
+      <tbody>
+        {% for backup in backups %}
+          <tr>
+            <td class="table-muted">{{ backup.website.fqdn if backup.website else '—' }}</td>
+            <td>{{ backup.scope.value }}</td>
+            <td><span class="status status-{{ backup.status.value }}">{{ backup.status.value }}</span></td>
+            <td class="table-muted">{{ ((backup.size_bytes or 0) / 1048576)|round(2) }} MB</td>
+            <td class="table-muted">{{ backup.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            <td class="table-muted">{{ backup.expires_at.strftime('%d %b %Y') if backup.expires_at else '—' }}</td>
+            <td class="table-muted">{{ (backup.error or '')[:120] or '—' }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="7" class="table-muted">No backups have been created.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

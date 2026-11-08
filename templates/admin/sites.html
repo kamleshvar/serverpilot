@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+{% block title %}Websites · {{ app_name }}{% endblock %}
+{% block kicker %}Administration{% endblock %}
+{% block page_title %}Websites{% endblock %}
+
+{% block content %}
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>All websites</h3>
+      <p>Inspect ownership and force-stop websites that are causing incidents.</p>
+    </div>
+  </div>
+  <form class="filter-bar" method="get" action="{{ url_for('admin.sites') }}">
+    <select name="status">
+      <option value="">All statuses</option>
+      {% for status in statuses %}
+        <option value="{{ status }}" {{ 'selected' if status == status_filter }}>{{ status }}</option>
+      {% endfor %}
+    </select>
+    <button class="button button-ghost" type="submit">Filter</button>
+  </form>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Website</th><th>Owner</th><th>Status</th><th>Server</th><th>Last deployed</th><th>Action</th></tr></thead>
+      <tbody>
+        {% for website in websites %}
+          <tr>
+            <td>
+              <strong>{{ website.name }}</strong>
+              <div class="table-muted">{{ website.fqdn }}</div>
+            </td>
+            <td class="table-muted">{{ website.owner.email }}</td>
+            <td><span class="status status-{{ website.status.value }}">{{ website.status.value }}</span></td>
+            <td class="table-muted">{{ website.server.name if website.server else 'Unassigned' }}</td>
+            <td class="table-muted">{{ website.last_deployed_at.strftime('%d %b %Y %H:%M') if website.last_deployed_at else '—' }}</td>
+            <td>
+              {% if website.status.value in ['running', 'building'] %}
+                <form method="post" action="{{ url_for('admin.force_stop_site', website_id=website.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="text" name="reason" placeholder="Reason" required>
+                  <button class="button button-small button-danger" type="submit">Force stop</button>
+                </form>
+              {% else %}
+                <span class="table-muted">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="table-muted">No websites matched the filter.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

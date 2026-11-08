@@ -1,0 +1,46 @@
+{% extends "admin/base.html" %}
+{% block title %}Notifications · Admin{% endblock %}
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<section class="admin-panel">
+  <div class="admin-panel-heading">
+    <div>
+      <h2>Administrator notifications</h2>
+      <p>{{ unread }} unread notification{{ '' if unread == 1 else 's' }}.</p>
+    </div>
+    {% if unread %}
+      <form method="post" action="{{ url_for('admin.mark_notifications_read') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="admin-button admin-button-ghost" type="submit">Mark all read</button>
+      </form>
+    {% endif %}
+  </div>
+  {% if notifications %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Title</th><th>Category</th><th>Severity</th><th>Received</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for notification in notifications %}
+            <tr>
+              <td>
+                <strong>{{ notification.title }}</strong>
+                {% if notification.body %}<div class="admin-muted">{{ notification.body }}</div>{% endif %}
+              </td>
+              <td class="admin-muted">{{ notification.category }}</td>
+              <td><span class="status status-{{ notification.severity.value }}">{{ notification.severity.value }}</span></td>
+              <td class="admin-muted">{{ notification.created_at.strftime('%d %b %Y %H:%M') }}</td>
+              <td class="admin-muted">{{ 'Read' if notification.is_read else 'Unread' }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="admin-empty">
+      <h3>No administrator notifications</h3>
+      <p>Infrastructure, DNS, deployment, and security events appear here.</p>
+    </div>
+  {% endif %}
+</section>
+{% endblock %}

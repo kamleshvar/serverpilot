@@ -1,0 +1,108 @@
+{% macro field_errors(field) %}
+  {% for error in field.errors %}<em class="field-error">{{ error }}</em>{% endfor %}
+{% endmacro %}
+
+<form method="post" class="site-form" novalidate>
+  {{ form.hidden_tag() }}
+
+  <section class="form-section">
+    <div class="form-section-head">
+      <h3>Identity</h3>
+      <p>The public address is permanent for the life of this deployment.</p>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>{{ form.name.label.text }}</span>
+        {{ form.name() }}
+        {{ field_errors(form.name) }}
+      </label>
+      <label class="field">
+        <span>{{ form.domain_name.label.text }}</span>
+        {{ form.domain_name() }}
+        {{ field_errors(form.domain_name) }}
+      </label>
+      <label class="field field-span-2">
+        <span>{{ form.subdomain.label.text }}</span>
+        <div class="input-suffix">
+          {{ form.subdomain() }}
+          <span class="input-suffix-text">.{{ form.domain_name.choices[0][0] if form.domain_name.choices|length == 1 else 'domain' }}</span>
+        </div>
+        <small>Lowercase letters, numbers and hyphens. This becomes the public hostname.</small>
+        {{ field_errors(form.subdomain) }}
+      </label>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <div class="form-section-head">
+      <h3>Source</h3>
+      <p>Repository access is verified through your connected GitHub App installation.</p>
+    </div>
+    <div class="form-grid">
+      <label class="field field-span-2">
+        <span>{{ form.repository_full_name.label.text }}</span>
+        {{ form.repository_full_name() }}
+        <datalist id="repository-options">
+          {% for repo in repositories or [] %}
+            <option value="{{ repo }}"></option>
+          {% endfor %}
+        </datalist>
+        <small>{% if github_app_configured %}Only repositories accessible to your GitHub App installation are accepted.{% else %}Repositories are verified against your linked GitHub account.{% endif %}</small>
+        {{ field_errors(form.repository_full_name) }}
+      </label>
+      <label class="field">
+        <span>{{ form.branch.label.text }}</span>
+        {{ form.branch() }}
+        {{ field_errors(form.branch) }}
+      </label>
+      <label class="field">
+        <span>{{ form.framework.label.text }}</span>
+        {{ form.framework() }}
+        {{ field_errors(form.framework) }}
+      </label>
+      <label class="field">
+        <span>{{ form.root_directory.label.text }}</span>
+        {{ form.root_directory() }}
+        {{ field_errors(form.root_directory) }}
+      </label>
+      <label class="field">
+        <span>{{ form.internal_port.label.text }}</span>
+        {{ form.internal_port() }}
+        {{ field_errors(form.internal_port) }}
+      </label>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <div class="form-section-head">
+      <h3>Runtime</h3>
+      <p>Commands run inside the isolated application container, not on the host.</p>
+    </div>
+    <div class="form-grid">
+      <label class="field">
+        <span>{{ form.build_command.label.text }}</span>
+        {{ form.build_command() }}
+        {{ field_errors(form.build_command) }}
+      </label>
+      <label class="field">
+        <span>{{ form.start_command.label.text }}</span>
+        {{ form.start_command() }}
+        {{ field_errors(form.start_command) }}
+      </label>
+      <label class="field">
+        <span>{{ form.healthcheck_path.label.text }}</span>
+        {{ form.healthcheck_path() }}
+        {{ field_errors(form.healthcheck_path) }}
+      </label>
+      <label class="field field-checkbox">
+        {{ form.auto_deploy_enabled() }}
+        <span>{{ form.auto_deploy_enabled.label.text }}</span>
+      </label>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button class="button button-primary" type="submit">{{ 'Save changes' if editing else 'Create website' }}</button>
+    <a class="button button-ghost" href="{{ url_for('sites.detail', website_id=website.id) if editing else url_for('dashboard.index') }}">Cancel</a>
+  </div>
+</form>

@@ -1,0 +1,108 @@
+{% extends "user/base.html" %}
+{% block title %}Overview · {{ app_name }}{% endblock %}
+{% block kicker %}Workspace{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <div>
+    <h2>Welcome back, {{ current_user.display_name.split(' ')[0] }}.</h2>
+    <p>Your websites, quotas and deployment activity in one place.</p>
+  </div>
+  <a class="button button-primary" href="{{ url_for('sites.new') }}">New website</a>
+</section>
+
+<section class="metric-grid" aria-label="Account summary">
+  <article class="metric-card">
+    <span class="metric-label">Websites</span>
+    <strong class="metric-value">{{ websites|length }}<span class="metric-suffix">/ {{ max_websites }}</span></strong>
+    <span class="metric-note">{{ max_websites - websites|length }} slot{{ '' if (max_websites - websites|length) == 1 else 's' }} available</span>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Running</span>
+    <strong class="metric-value">{{ running }}</strong>
+    <span class="metric-note">of {{ websites|length }} deployed website{{ '' if websites|length == 1 else 's' }}</span>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Shared RAM</span>
+    <strong class="metric-value">{{ quota.ram_limit_mb if quota else 2048 }}<span class="metric-suffix"> MB</span></strong>
+    <span class="metric-note">{% if quota and quota.ram_measured_mb > 0 %}Real usage: {{ quota.ram_measured_mb|round(0)|int }} MB measured{% else %}Measured live by the agent{% endif %}</span>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Shared storage</span>
+    <strong class="metric-value">{{ ((quota.storage_limit_mb if quota else 10240) / 1024)|round(0)|int }}<span class="metric-suffix"> GB</span></strong>
+    <span class="metric-note">{% if quota and quota.storage_measured_mb > 0 %}Real usage: {{ (quota.storage_measured_mb / 1024)|round(1) }} GB measured{% else %}Measured live by the agent{% endif %}</span>
+  </article>
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Your websites</h3>
+      <p>Applications assigned to {{ current_user.email }}.</p>
+    </div>
+  </div>
+
+  {% if websites %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Website</th>
+            <th scope="col">Domain</th>
+            <th scope="col">Status</th>
+            <th scope="col">Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for site in websites %}
+            <tr>
+              <td>
+                <div class="table-primary">{{ site.name }}</div>
+                <div class="table-secondary">{{ site.repository_full_name or 'Repository not connected' }}</div>
+              </td>
+              <td><a class="link-muted" href="{{ site.url }}" rel="noopener" target="_blank">{{ site.fqdn }}</a></td>
+              <td><span class="status status-{{ site.status.value }}">{{ site.status.value.replace('_', ' ') }}</span></td>
+              <td class="table-muted">{{ site.created_at.strftime('%d %b %Y') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" stroke="currentColor" stroke-width="1.3"/><path d="m4.4 7.7 7.6 4.4 7.6-4.4M12 12.1V21" stroke="currentColor" stroke-width="1.3"/></svg>
+      </div>
+      <h3>No websites yet</h3>
+      <p>Your first deployment will appear here once a repository is connected and a deployment is created.</p>
+    </div>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <div class="panel-heading">
+    <div>
+      <h3>Plan &amp; shared quotas</h3>
+      <p>Quotas apply to your account across every website, not per website.</p>
+    </div>
+    <span class="tag">{{ quota.plan_name if quota else 'Free' }}</span>
+  </div>
+  <div class="quota-grid">
+    <div class="quota-row">
+      <div class="quota-copy"><span>Website slots</span><strong>{{ websites|length }} / {{ max_websites }}</strong></div>
+      <div class="progress"><span style="width: {{ (websites|length / max_websites * 100) if max_websites else 0 }}%"></span></div>
+    </div>
+    <div class="quota-row">
+      <div class="quota-copy"><span>RAM quota</span><strong>{{ quota.ram_limit_mb if quota else 1024 }} MB</strong></div>
+      <div class="progress"><span style="width: 0%"></span></div>
+      <p class="quota-hint">Live usage appears when a deployment agent is connected.</p>
+    </div>
+    <div class="quota-row">
+      <div class="quota-copy"><span>Storage quota</span><strong>{{ ((quota.storage_limit_mb if quota else 5120) / 1024)|round(0)|int }} GB</strong></div>
+      <div class="progress"><span style="width: 0%"></span></div>
+      <p class="quota-hint">Measured from website volumes and backups.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

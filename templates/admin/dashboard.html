@@ -1,0 +1,114 @@
+{% extends "admin/base.html" %}
+{% block title %}Global overview · {{ app_name }}{% endblock %}
+{% block kicker %}Control plane{% endblock %}
+{% block page_title %}Global overview{% endblock %}
+
+{% block content %}
+{% if stats is none %}
+  <div class="admin-alert admin-alert-error">Platform metrics could not be loaded. Check the application log for details.</div>
+{% else %}
+<section class="admin-hero">
+  <div>
+    <p class="admin-eyebrow">Fleet state</p>
+    <h2>{{ stats.running_websites }} running of {{ stats.total_websites }} websites</h2>
+    <p class="admin-hero-copy">Live records from the control database. Metrics reported by agents are labelled separately from configured capacity.</p>
+  </div>
+  <div class="admin-hero-badges">
+    <span class="admin-badge admin-badge-success">{{ stats.servers_online }} server{{ '' if stats.servers_online == 1 else 's' }} online</span>
+    <span class="admin-badge {{ 'admin-badge-warning' if stats.failed_deployments else '' }}">{{ stats.failed_deployments }} failed deployment{{ '' if stats.failed_deployments == 1 else 's' }}</span>
+  </div>
+</section>
+
+<section class="admin-metric-grid" aria-label="Platform metrics">
+  <article class="admin-metric">
+    <span>Users</span>
+    <strong>{{ stats.total_users }}</strong>
+    <p>{{ stats.active_users }} active · {{ stats.suspended_users }} suspended</p>
+  </article>
+  <article class="admin-metric">
+    <span>Websites</span>
+    <strong>{{ stats.total_websites }}</strong>
+    <p>{{ stats.running_websites }} running · {{ stats.stopped_websites }} stopped</p>
+  </article>
+  <article class="admin-metric">
+    <span>Containers running</span>
+    <strong>{{ stats.running_containers }}</strong>
+    <p>{{ stats.agents_online }} active agent{{ '' if stats.agents_online == 1 else 's' }}</p>
+  </article>
+  <article class="admin-metric">
+    <span>Domains</span>
+    <strong>{{ stats.healthy_domains }}<small>/{{ stats.domain_count }}</small></strong>
+    <p>DNS healthy or unverified</p>
+  </article>
+</section>
+
+<div class="admin-columns">
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Capacity &amp; measured usage</h3>
+        <p>Agent-reported usage only; no synthetic values.</p>
+      </div>
+    </div>
+    <dl class="admin-detail-list">
+      <div><dt>Measured RAM</dt><dd>{{ stats.measured_ram_mb }} MB <span>of {{ stats.total_ram_capacity_mb }} MB configured</span></dd></div>
+      <div><dt>Measured storage</dt><dd>{{ (stats.measured_storage_mb / 1024)|round(1) }} GB <span>of {{ (stats.total_storage_capacity_mb / 1024)|round(1) }} GB configured</span></dd></div>
+      <div><dt>Servers</dt><dd>{{ stats.servers_online }} online / {{ stats.servers_total }} registered</dd></div>
+      <div><dt>Failed deployments</dt><dd>{{ stats.failed_deployments }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="admin-panel">
+    <div class="admin-panel-head">
+      <div>
+        <h3>Domains</h3>
+        <p>Allowed user domains and platform routes.</p>
+      </div>
+    </div>
+    {% if stats.domains %}
+      <ul class="admin-domain-list">
+        {% for domain in stats.domains %}
+          <li>
+            <div>
+              <strong>{{ domain.name }}</strong>
+              <span>{{ 'User deployable' if domain.is_user_allowed else 'Platform only' }}</span>
+            </div>
+            <span class="admin-status admin-status-{{ domain.dns_status.value }}">{{ domain.dns_status.value.replace('_', ' ') }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="admin-muted">No domains seeded. Run <code>flask --app wsgi seed-core</code>.</p>
+    {% endif %}
+  </section>
+</div>
+
+<section class="admin-panel">
+  <div class="admin-panel-head">
+    <div>
+      <h3>Recent administrator activity</h3>
+      <p>Authentication and authorization events are recorded.</p>
+    </div>
+  </div>
+  {% if recent_actions %}
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Action</th><th>Administrator</th><th>Result</th><th>When</th></tr></thead>
+        <tbody>
+          {% for action in recent_actions %}
+            <tr>
+              <td>{{ action.action.replace('_', ' ') }}</td>
+              <td>{{ action.admin_email or 'Unidentified' }}</td>
+              <td><span class="admin-result admin-result-{{ action.result.value }}">{{ action.result.value }}</span></td>
+              <td class="admin-table-muted">{{ action.created_at.strftime('%d %b %Y %H:%M') }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="admin-muted">No administrator activity recorded yet.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}
