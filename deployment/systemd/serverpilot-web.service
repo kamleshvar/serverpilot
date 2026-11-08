@@ -1,0 +1,24 @@
+[Unit]
+Description=ServerPilot web application
+After=network-online.target redis-server.service postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=serverpilot
+Group=serverpilot
+WorkingDirectory=/opt/serverpilot
+Environment=APP_ENV=production
+Environment=FLASK_SKIP_DOTENV=1
+EnvironmentFile=/etc/serverpilot/serverpilot.env
+ExecStart=/opt/serverpilot/.venv/bin/gunicorn -c /opt/serverpilot/gunicorn.conf.py wsgi:app
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/serverpilot/instance /var/log/serverpilot /run/serverpilot
+
+[Install]
+WantedBy=multi-user.target

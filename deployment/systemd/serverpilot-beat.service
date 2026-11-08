@@ -1,0 +1,24 @@
+[Unit]
+Description=ServerPilot Celery beat scheduler
+After=network-online.target redis-server.service postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=serverpilot
+Group=serverpilot
+WorkingDirectory=/opt/serverpilot
+Environment=APP_ENV=production
+Environment=FLASK_SKIP_DOTENV=1
+EnvironmentFile=/etc/serverpilot/serverpilot.env
+ExecStart=/opt/serverpilot/.venv/bin/celery -A serverpilot.celery_app:celery beat --loglevel=INFO --schedule=/opt/serverpilot/instance/celerybeat-schedule
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/serverpilot/instance /var/log/serverpilot
+
+[Install]
+WantedBy=multi-user.target

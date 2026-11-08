@@ -1,0 +1,25 @@
+[Unit]
+Description=ServerPilot deployment agent
+After=docker.service network-online.target
+Requires=docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=serverpilot
+Group=serverpilot
+SupplementaryGroups=docker
+WorkingDirectory=/opt/serverpilot-agent
+EnvironmentFile=/etc/serverpilot/agent.env
+ExecStart=/opt/serverpilot-agent/.venv/bin/python -m serverpilot_agent
+Restart=always
+RestartSec=5
+NoNewPrivileges=false
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/serverpilot /etc/nginx/conf.d/serverpilot
+ReadOnlyPaths=/etc/serverpilot
+
+[Install]
+WantedBy=multi-user.target
